@@ -28,7 +28,6 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 ### 🎵 Media Playback
 - **MPV Player** - High-quality video playback with excellent format support
 - **ExoPlayer Support** - Alternative playback engine for broader compatibility
-- **Picture-in-Picture** - Continue watching while using other apps
 - **Theme Song Support** - Immersive experience with background audio
 
 ### 📱 Modern UI/UX
@@ -38,11 +37,8 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 - **Responsive Layout** - Optimized for phones, tablets, and various screen sizes
 
 ### 🔄 Advanced Features
-- **Offline Downloads** - Download content for offline viewing with progress notifications
-- **Client-side Watchlist** - Keep track of your favorite content
 - **Multiple Quality Options** - Choose from Auto, 4K, 1080p, 720p, 480p, 360p
 - **Subtitle Support** - Full subtitle support with customizable sizing
-- **Background Sync** - Automatic content synchronization
 
 ---
 
@@ -50,56 +46,19 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 
 <div align="center">
 
-| Splash | Server Setup | Login |
-|--------|--------------|-------|
-| <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/02_Splash.png?raw=true" alt="Splash" width="200" height="400"> | <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/03_Server.png?raw=true" alt="Server Setup" width="200" height="400"> | <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/04_Login.png?raw=true" alt="Login" width="200" height="400"> |
+| Splash | Home | Library |
+|--------|------|---------|
+| <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Splash.png" alt="Splash" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Home.png" alt="Home" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Library.png" alt="Library" width="1280" height="720"> |
 
-| Home | Library | Series |
-|------|---------|--------|
-| <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/05_Home.png?raw=true" alt="Home" width="200" height="400"> | <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/06_Library.png?raw=true" alt="Library" width="200" height="400"> | <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/09_Series.png?raw=true" alt="Series" width="200" height="400"> |
+| Movies Screen | Shows Screen | Movie |
+|--------------|--------------|-------|
+| <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Shows.png" alt="Movies" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Movies.png" alt="Shows" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Movie.png" alt="Shows" width="1280" height="720"> |
 
-| Category | Search | Season |
-|----------|--------|--------|
-| <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/07_Category.png?raw=true" alt="Category" width="200" height="400"> | <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/08_Search.png?raw=true" alt="Search" width="200" height="400"> | <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/10_Season.png?raw=true" alt="Season" width="200" height="400"> |
-
-| Episode | Settings |
-|---------|----------|
-| <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/11_Episode.png?raw=true" alt="Episode" width="200" height="400"> | <img src="https://github.com/hritwikjohri/Void-for-jellyfin/blob/main/alpha-v-0.2.1/12_Settings.png?raw=true" alt="Settings" width="200" height="400"> |
-
+| Show | Search | Settings |
+|------|--------|----------|
+| <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Show.png" alt="Movie" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Search.png" alt="Search" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Profile.png" alt="Settings" width="1280" height="720"> | 
 </div>
 
-
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Android device running **API level 26+** (Android 8.0)
-- A running **Jellyfin server** (version 10.8+)
-- **Java 11** or higher (for development)
-
-### Installation
-
-#### Download APK from Github
-1. Go to the [Releases](../../releases) page
-2. Download the latest APK file
-3. Enable "Install from Unknown Sources" in your Android settings
-4. Install the APK
-
-#### Download from PlayStore
-1. Go to the Play store and search for void
-
-### First Time Setup
-
-1. **Launch Void** on your Android device
-2. **Enter Server URL** - Input your Jellyfin server address (e.g., `http://192.168.1.100:8096`)
-3. **Login** - Use your Jellyfin username and password
-4. **Configure Preferences** - Set up your preferred quality, player, and download settings
-5. **Start Streaming!** - Browse your library and enjoy your content
-
----
 
 ## 🛠️ Tech Stack & Architecture
 
@@ -148,7 +107,6 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 
 ### Download Settings
 - **Quality Options**: Auto, 4K, 1080p, 720p, 480p, 360p
-- **WiFi Only**: Download only on WiFi (recommended)
 - **Storage Location**: Internal/External storage
 - **Auto-cleanup**: Automatic removal of old downloads
 
