@@ -46,17 +46,13 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 
 <div align="center">
 
-| Splash | Home | Library |
-|--------|------|---------|
-| <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Splash.png" alt="Splash" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Home.png" alt="Home" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Library.png" alt="Library" width="1280" height="720"> |
+| Home | Library | Library (Grid) | Movie |
+|------|---------|----------------|-------|
+| <img src="./VoidTV-screenshots/VoidTV_Home.png" alt="Home" width="1280" height="720"> | <img src="./VoidTV-screenshots/VoidTV_Library.png" alt="Library" width="1280" height="720"> | <img src="./VoidTV-screenshots/VoidTV_library%20%282%29.png" alt="Library Grid" width="1280" height="720"> | <img src="./VoidTV-screenshots/VoidTV_Movie.png" alt="Movie" width="1280" height="720"> |
 
-| Movies Screen | Shows Screen | Movie |
-|--------------|--------------|-------|
-| <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Shows.png" alt="Movies" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Movies.png" alt="Shows" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Movie.png" alt="Shows" width="1280" height="720"> |
-
-| Show | Search | Settings |
-|------|--------|----------|
-| <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Show.png" alt="Movie" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Search.png" alt="Search" width="1280" height="720"> | <img src="https://github.com/hritwikjohri/VoidTV-for-jellyfin/blob/main/VoidTV/VoidTV_Profile.png" alt="Settings" width="1280" height="720"> | 
+| Search | Profile | Season | Movie Navigation |
+|--------|---------|--------|------------------|
+| <img src="./VoidTV-screenshots/VoidTV_Search.png" alt="Search" width="1280" height="720"> | <img src="./VoidTV-screenshots/VoidTV_Profile.png" alt="Profile" width="1280" height="720"> | <img src="./VoidTV-screenshots/VoidTV_season.png" alt="Season" width="1280" height="720"> | <img src="./VoidTV-screenshots/movie_nav.png" alt="Movie Navigation" width="1280" height="720"> |
 </div>
 
 
