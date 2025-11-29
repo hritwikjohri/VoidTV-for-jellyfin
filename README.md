@@ -24,9 +24,18 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 - **Detailed media views** - See the version, HDR type (Dolby Vision/HDR10/HDR10+), and audio and subtitle codecs and languages on screen before starting playback.
 - **Theme song support** - Immersive experience with the theme song playing in the background.
 - **HDR fallback** - Option to turn off Dolby Vision if it is not supported by the device.
+- **ASS subtitles support** - Thanks to MPV.
+- **Hi10P hardware decoding support** - On Fire 4K and Max devices.
+- **Skip intro support** - Using the media segment API.
+- **Audio passthrough support** - Via Media3.
+- **Quick login** - Faster login using a QR code.
+- **Special features support** - Support for special features such as behind-the-scenes content, deleted scenes, etc.
+- **Better multi-version support** - Prefers the current media folder for the next item, so it does not fall back to the default stream each episode (e.g. if you play episode 1 from folder B, the next episode will also play from folder B instead of A).
+- **Remember audio and subtitles** - Remembers your audio and subtitle choices (e.g. if you use English subtitles with Japanese audio for episode 1, the next episode will also use English subtitles with Japanese audio instead of the default).
+- **Collection support**
 
 ### Media Playback
-- **MPV player** - High-quality video playback with extended format support.
+- **MPV player** - High-quality video playback with extended format support, with the option to edit the MPV config to your preference.
 - **ExoPlayer support** - Media3 with FFmpeg audio support.
 
 
@@ -41,7 +50,7 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 - **Subtitle support** - Full subtitle support including ASS, with offset and size adjustment.
 ---
 
-##  Screenshots
+## Screenshots
 
 <div align="center">
 
