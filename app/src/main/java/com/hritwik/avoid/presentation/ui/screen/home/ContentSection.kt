@@ -41,6 +41,7 @@ fun ContentSection(
     onFocusedItemChange: (MediaItem?) -> Unit
 ) {
     val resumeItems = libraryState.resumeItems
+    val nextUpItems = libraryState.nextUpEpisodes
     val latestItemsByLibrary = libraryState.latestItemsByLibrary
     val libraries = libraryState.libraries
     val recentMovies = libraryState.latestMovies.take(10)
@@ -89,6 +90,26 @@ fun ContentSection(
                     title = "Continue Watching",
                     keyPrefix = "resume",
                     items = resumeItems,
+                    serverUrl = contentServerUrl,
+                    contentFocusTarget = contentFocusTarget,
+                    contentFocusRequester = contentFocusRequester,
+                    sideNavigationFocusRequester = sideNavigationFocusRequester,
+                    onMediaItemClick = onMediaItemClick,
+                    onMediaItemFocus = onMediaItemFocus,
+                    onFocusedItemChange = onFocusedItemChange,
+                    focusTargetOverride = FeatureContentFocusTarget.Resume,
+                    showProgress = true,
+                    showTitle = true
+                )
+            }
+        }
+
+        if (nextUpItems.isNotEmpty()) {
+            item(key = "next_up") {
+                HomeMediaRowSection(
+                    title = "Next up",
+                    keyPrefix = "next_up",
+                    items = nextUpItems,
                     serverUrl = contentServerUrl,
                     contentFocusTarget = contentFocusTarget,
                     contentFocusRequester = contentFocusRequester,
