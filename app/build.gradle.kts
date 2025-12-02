@@ -37,21 +37,17 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
     }
 
     packaging {
@@ -206,6 +202,7 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.zxing.core)
     implementation(libs.nanohttpd)
+    implementation(libs.tink)
     ksp(libs.androidx.room.compiler)
 
     
@@ -216,14 +213,10 @@ dependencies {
     
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
-
+    
     
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.security.crypto)
-
-    
-    implementation(libs.accompanist.systemuicontroller)
-    implementation(libs.accompanist.permissions)
 
     
     testImplementation(libs.junit)

@@ -1,56 +1,48 @@
 [versions]
-agp = "8.13.0"
-kotlin = "2.0.21"
-coreKtx = "1.15.0"
-lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.9.3"
-composeBom = "2025.07.00"
-material3 = "1.4.0-alpha18"
-composeNavigation = "2.8.4"
-composeAnimation = "1.7.5"
-accompanist = "0.34.0"
+agp = "8.13.1"
+kotlin = "2.2.21"
+coreKtx = "1.17.0"
+lifecycleRuntimeKtx = "2.10.0"
+activityCompose = "1.12.0"
+composeBom = "2025.11.01"
+composeNavigation = "2.9.6"
 media3 = "1.8.0"
 coil = "2.7.0"
-retrofit = "2.11.0"
-okhttp = "4.12.0"
-kotlinxSerialization = "1.7.3"
-jellyfinSdk = "1.6.0"
-room = "2.6.1"
-hilt = "2.52"
-hiltNavigationCompose = "1.2.0"
-coroutines = "1.9.0"
+retrofit = "2.12.0"
+okhttp = "5.3.2"
+kotlinxSerialization = "1.9.0"
+jellyfinSdk = "1.8.4"
+room = "2.8.4"
+hilt = "2.57.2"
+hiltNavigationCompose = "1.3.0"
+coroutines = "1.10.2"
 datastore = "1.1.1"
-securityCrypto = "1.1.0-alpha06"
+securityCrypto = "1.1.0"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.6.1"
-mockk = "1.13.13"
-turbine = "1.1.0"
-ksp = "2.0.21-1.0.25"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+mockk = "1.14.6"
+turbine = "1.2.1"
+ksp = "2.2.21-2.0.4"
 converterGson = "3.0.0"
-uiTextGoogleFonts = "1.9.0-alpha04"
+    tink = "1.19.0"
 paletteKtx = "1.0.0"
-animation = "1.9.0-alpha04"
-animationGraphics = "1.9.0-alpha04"
-materialIconsExtended = "1.7.8"
-databindingAdapters = "8.11.0"
+databindingAdapters = "8.13.1"
 palette = "1.0.0"
 appcompat = "1.7.1"
-material = "1.9.0-rc01"
-work = "2.9.0"
+work = "2.11.0"
 sdpCompose = "1.1.0"
 sspAndroid = "1.1.0"
-lifecycleService = "2.9.2"
-lifecycleProcess = "2.9.2"
+lifecycleService = "2.10.0"
+lifecycleProcess = "2.10.0"
 sqlcipher = "4.5.4"
-startup = "1.1.1"
-paging = "3.3.2"
+startup = "1.2.0"
+paging = "3.3.6"
 leanback = "1.2.0"
 tvFoundation = "1.0.0-alpha12"
 tvMaterial = "1.1.0-alpha01"
-foundation = "1.9.2"
 coilVersion = "1.0.6"
-zxing = "3.5.3"
+zxing = "3.5.4"
 nanohttpd = "2.3.1"
 media3FfmpegDecoder = "1.8.0+1"
 
@@ -67,10 +59,10 @@ androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "composeNavigation" }
-androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "composeAnimation" }
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
 coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
@@ -91,8 +83,6 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 sqlcipher-android = { module = "net.zetetic:android-database-sqlcipher", version.ref = "sqlcipher" }
-accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
-accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -100,11 +90,11 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
-androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts" }
 androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version.ref = "paletteKtx" }
-androidx-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
-androidx-animation-graphics = { group = "androidx.compose.animation", name = "animation-graphics", version.ref = "animationGraphics" }
-androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+androidx-animation = { group = "androidx.compose.animation", name = "animation" }
+androidx-animation-graphics = { group = "androidx.compose.animation", name = "animation-graphics" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-databinding-adapters = { group = "androidx.databinding", name = "databinding-adapters", version.ref = "databindingAdapters" }
 androidx-palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -124,7 +114,7 @@ androidx-media3-cast = { module = "androidx.media3:media3-cast", version.ref = "
 androidx-media3-effect = { module = "androidx.media3:media3-effect", version.ref = "media3" }
 androidx-media3-transformer = { module = "androidx.media3:media3-transformer", version.ref = "media3" }
 androidx-media3-test-utils = { module = "androidx.media3:media3-test-utils", version.ref = "media3" }
-androidx-material = { group = "androidx.compose.material", name = "material", version.ref = "material" }
+androidx-material = { group = "androidx.compose.material", name = "material" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 sdp-compose = { module = "com.github.Kaaveh:sdp-compose", version.ref = "sdpCompose" }
 ssp-android = { module = "com.intuit.ssp:ssp-android", version.ref = "sspAndroid" }
@@ -136,11 +126,12 @@ androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", 
 androidx-leanback = { group = "androidx.leanback", name = "leanback", version.ref = "leanback" }
 androidx-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "tvFoundation" }
 androidx-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "tvMaterial" }
-androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 coil = { group = "jp.wasabeef.transformers", name = "coil", version.ref = "coilVersion" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 media3-ffmpeg-decoder = { module = "org.jellyfin.media3:media3-ffmpeg-decoder", version.ref = "media3FfmpegDecoder" }
+tink = { module = "com.google.crypto.tink:tink-android", version.ref = "tink" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

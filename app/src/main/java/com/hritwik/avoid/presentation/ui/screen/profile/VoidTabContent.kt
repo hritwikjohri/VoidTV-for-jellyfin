@@ -12,9 +12,10 @@ import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.HdrOn
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.SkipNext
@@ -41,6 +42,7 @@ import com.hritwik.avoid.presentation.ui.components.dialogs.DisplayModeSelection
 import com.hritwik.avoid.presentation.ui.components.dialogs.MpvConfigDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.PlayerSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleSizeDialog
+import com.hritwik.avoid.presentation.ui.components.dialogs.ThemeSongFallbackDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.ThemeSongVolumeDialog
 import com.hritwik.avoid.presentation.ui.theme.PrimaryText
 import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
@@ -56,6 +58,7 @@ fun VoidTabContent(
     val playbackSettings by userDataViewModel.playbackSettings.collectAsStateWithLifecycle()
     val themeSongsEnabled = playbackSettings.playThemeSongs
     val themeSongVolume = playbackSettings.themeSongVolume
+    val themeSongFallbackUrl = playbackSettings.themeSongFallbackUrl
     val displayMode = playbackSettings.displayMode
     val playerType = playbackSettings.playerType
     val audioPassthroughEnabled = playbackSettings.audioPassthroughEnabled
@@ -114,8 +117,33 @@ fun VoidTabContent(
                         currentVolume = themeSongVolume,
                         onVolumeSelected = { volume ->
                             userDataViewModel.setThemeSongVolume(volume)
+                            showVolumeDialog = false
                         },
-                        onDismiss = { }
+                        onDismiss = { showVolumeDialog = false }
+                    )
+                }
+            }
+
+            item {
+                var showFallbackDialog by remember { mutableStateOf(false) }
+                val fallbackDisplayText = themeSongFallbackUrl.ifBlank { "Not set" }
+
+                SettingItem(
+                    icon = Icons.Default.Link,
+                    title = "Theme Song Fallback URL",
+                    subtitle = "Base URL used when no theme is provided",
+                    onClick = { showFallbackDialog = true },
+                    trailingText = fallbackDisplayText
+                )
+
+                if (showFallbackDialog) {
+                    ThemeSongFallbackDialog(
+                        initialUrl = themeSongFallbackUrl,
+                        onSave = { url ->
+                            userDataViewModel.setThemeSongFallbackUrl(url)
+                            showFallbackDialog = false
+                        },
+                        onDismiss = { showFallbackDialog = false }
                     )
                 }
             }
@@ -155,7 +183,7 @@ fun VoidTabContent(
 
         item {
             SettingItemWithSwitch(
-                icon = Icons.Default.OpenInNew,
+                icon = Icons.AutoMirrored.Filled.OpenInNew,
                 title = "Use External Player",
                 subtitle = "Play media in another video app",
                 checked = externalPlayerEnabled,

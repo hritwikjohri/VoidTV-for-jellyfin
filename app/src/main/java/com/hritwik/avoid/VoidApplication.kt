@@ -3,6 +3,7 @@ package com.hritwik.avoid
 import android.app.Application
 import android.content.ComponentCallbacks2
 import android.content.Intent
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
 import androidx.annotation.OptIn
@@ -170,9 +171,16 @@ class VoidApplication : Application() {
     }
 
     private fun applyPersonalization(language: String) {
-        val config = resources.configuration
-        config.setLocale(Locale(language))
-        resources.updateConfiguration(config, resources.displayMetrics)
+        val locale = Locale.forLanguageTag(language.ifBlank { Locale.getDefault().toLanguageTag() })
+        Locale.setDefault(locale)
+        val newConfig = android.content.res.Configuration(resources.configuration)
+        newConfig.setLocale(locale)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            createConfigurationContext(newConfig)
+        } else {
+            @Suppress("DEPRECATION")
+            resources.updateConfiguration(newConfig, resources.displayMetrics)
+        }
     }
 
     fun registerTrimMemoryCallback(callback: ComponentCallbacks2) {
@@ -187,6 +195,8 @@ class VoidApplication : Application() {
         }
     }
 
+    @Deprecated("Base Application method is deprecated in the platform")
+    @Suppress("DEPRECATION")
     override fun onLowMemory() {
         super.onLowMemory()
        imageLoader.memoryCache?.clear()

@@ -65,7 +65,7 @@ object MpvConfig {
         return (
             """
             hwdec=mediacodec,mediacodec-copy
-            vo=gpu-next
+            vo=gpu
             sub-codepage=auto
             sub-fix-timing=yes
             blend-subtitles=yes

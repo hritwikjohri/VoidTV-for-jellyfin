@@ -391,7 +391,8 @@ object CodecDetector {
                 if (display != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     val hdrCaps = display.hdrCapabilities
                     if (hdrCaps != null) {
-                        val supportedTypes = hdrCaps.supportedHdrTypes
+                        @Suppress("DEPRECATION")
+                        val supportedTypes = hdrCaps.getSupportedHdrTypes()
                         hdr10 = supportedTypes.contains(Display.HdrCapabilities.HDR_TYPE_HDR10)
                         hlg = supportedTypes.contains(Display.HdrCapabilities.HDR_TYPE_HLG)
                         dolbyVision = supportedTypes.contains(Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION)

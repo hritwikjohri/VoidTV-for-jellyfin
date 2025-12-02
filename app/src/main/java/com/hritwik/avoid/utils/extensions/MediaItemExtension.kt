@@ -51,7 +51,7 @@ fun Modifier.homeContentFocusProperties(
         left = sideNavigationFocusRequester
     }
     if (initialFocusRequester != null) {
-        enter = { initialFocusRequester }
+        onEnter = { initialFocusRequester }
     }
     block()
 }

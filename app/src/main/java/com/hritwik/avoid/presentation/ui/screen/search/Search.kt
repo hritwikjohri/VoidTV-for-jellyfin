@@ -37,7 +37,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryScrollableTabRow
@@ -86,7 +85,6 @@ import ir.kaaveh.sdpcompose.sdp
 import java.util.Locale
 
 @SuppressLint("MissingPermission")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Search(
     onMediaItemClick: (MediaItem) -> Unit = {},

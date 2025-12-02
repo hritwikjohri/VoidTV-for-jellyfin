@@ -16,6 +16,7 @@ import com.hritwik.avoid.domain.usecase.search.SearchItemsUseCase
 import com.hritwik.avoid.presentation.ui.state.SearchCategory
 import com.hritwik.avoid.presentation.ui.state.SearchState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(FlowPreview::class)
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val searchItemsUseCase: SearchItemsUseCase,
@@ -51,6 +51,7 @@ class SearchViewModel @Inject constructor(
 
     private val searchDebounceMs = 300L
 
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchResults = combine(_searchQuery, _selectedCategory) { query, category ->
         query to category
     }

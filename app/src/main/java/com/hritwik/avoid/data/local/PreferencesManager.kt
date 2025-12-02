@@ -10,8 +10,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.security.crypto.EncryptedFile
-import androidx.security.crypto.MasterKey
+import com.google.crypto.tink.Aead
+import com.google.crypto.tink.aead.AeadConfig
+import com.google.crypto.tink.aead.AesGcmKeyManager
+import com.google.crypto.tink.integration.android.AndroidKeysetManager
 import com.hritwik.avoid.data.local.model.PlaybackPreferences
 import com.hritwik.avoid.domain.model.auth.ServerConnectionMethod
 import com.hritwik.avoid.domain.model.playback.DecoderMode
@@ -47,10 +49,15 @@ class PreferencesManager @Inject constructor(
 ) {
     private val dataStore = context.dataStore
     private val authDataStore = context.authDataStore
-    private val masterKey: MasterKey by lazy {
-        MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+    private val aead: Aead by lazy {
+        AeadConfig.register()
+        AndroidKeysetManager.Builder()
+            .withSharedPref(context, TINK_KEYSET_NAME, TINK_KEYSET_PREF)
+            .withKeyTemplate(AesGcmKeyManager.aes256GcmTemplate())
+            .withMasterKeyUri(TINK_MASTER_KEY_URI)
             .build()
+            .keysetHandle
+            .getPrimitive(Aead::class.java)
     }
 
     private val mtlsCertificateFile: File
@@ -122,6 +129,11 @@ class PreferencesManager @Inject constructor(
         private val AUDIO_PASSTHROUGH_ENABLED = booleanPreferencesKey(PreferenceConstants.KEY_AUDIO_PASSTHROUGH_ENABLED)
         private val DIRECT_PLAY_ENABLED = booleanPreferencesKey(PreferenceConstants.KEY_DIRECT_PLAY_ENABLED)
         private val PREFER_HDR_OVER_DV = booleanPreferencesKey(PreferenceConstants.KEY_PREFER_HDR_OVER_DV)
+
+        private const val TINK_KEYSET_PREF = "void_tink_keyset"
+        private const val TINK_KEYSET_NAME = "tink_keyset"
+        private const val TINK_MASTER_KEY_URI = "android-keystore://void_tink_master_key"
+        private const val AEAD_ASSOCIATED_DATA_MTLS = "mtls_certificate"
 
         
         private val IMAGE_CACHE_SIZE = longPreferencesKey(PreferenceConstants.KEY_IMAGE_CACHE_SIZE)
@@ -428,14 +440,9 @@ class PreferencesManager @Inject constructor(
             if (mtlsCertificateFile.exists()) {
                 mtlsCertificateFile.delete()
             }
-            val encryptedFile = EncryptedFile.Builder(
-                context,
-                mtlsCertificateFile,
-                masterKey,
-                EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
-            ).build()
-            encryptedFile.openFileOutput().use { output ->
-                output.write(bytes)
+            val cipher = aead.encrypt(bytes, AEAD_ASSOCIATED_DATA_MTLS.toByteArray())
+            mtlsCertificateFile.outputStream().use { output ->
+                output.write(cipher)
             }
         }
         dataStore.edit { preferences ->
@@ -461,15 +468,8 @@ class PreferencesManager @Inject constructor(
             return@withContext null
         }
         runCatching {
-            val encryptedFile = EncryptedFile.Builder(
-                context,
-                mtlsCertificateFile,
-                masterKey,
-                EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
-            ).build()
-            encryptedFile.openFileInput().use { input ->
-                input.readBytes()
-            }
+            val cipherBytes = mtlsCertificateFile.readBytes()
+            aead.decrypt(cipherBytes, AEAD_ASSOCIATED_DATA_MTLS.toByteArray())
         }.getOrNull()
     }
 

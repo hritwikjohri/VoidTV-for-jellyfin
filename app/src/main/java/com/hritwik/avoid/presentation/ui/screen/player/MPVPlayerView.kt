@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -89,7 +88,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-@OptIn(UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(UnstableApi::class)
 @Suppress("UNUSED_PARAMETER")
 @Composable
 fun MpvPlayerView(

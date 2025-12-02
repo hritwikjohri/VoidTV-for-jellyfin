@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material.icons.outlined.LibraryAdd
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,7 +39,6 @@ import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
 import com.hritwik.avoid.utils.helpers.calculateRoundedValue
 import ir.kaaveh.sdpcompose.sdp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibrarySection(
     onLibraryClick: (String, String, LibraryType) -> Unit = { _, _, _ -> },

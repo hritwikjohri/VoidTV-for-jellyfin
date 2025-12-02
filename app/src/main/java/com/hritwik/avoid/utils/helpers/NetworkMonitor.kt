@@ -107,11 +107,6 @@ class NetworkMonitor @Inject constructor(
             if (status != null && status.isConnected) return status
         }
 
-        connectivityManager.allNetworks.forEach { network ->
-            val status = connectivityManager.getNetworkCapabilities(network)?.asStatus()
-            if (status != null && status.isConnected) return status
-        }
-
         return ConnectionStatus(false, false)
     }
 

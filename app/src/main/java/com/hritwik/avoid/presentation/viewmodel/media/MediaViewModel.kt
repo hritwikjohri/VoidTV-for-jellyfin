@@ -260,7 +260,11 @@ class MediaViewModel @Inject constructor(
 
     private fun buildFallbackThemeSongUrl(tvdbId: String?, fallbackBaseUrl: String?): String? {
         val id = tvdbId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val base = fallbackBaseUrl?.trim()?.trimEnd('/')?.takeIf { it.isNotEmpty() } ?: return null
+        val rawBase = fallbackBaseUrl?.trim()?.trimEnd('/')?.takeIf { it.isNotEmpty() } ?: return null
+        val base = when {
+            rawBase.startsWith("http://", ignoreCase = true) || rawBase.startsWith("https://", ignoreCase = true) -> rawBase
+            else -> "http://$rawBase"
+        }
         return "$base/$id.mp3"
     }
 

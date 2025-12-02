@@ -9,10 +9,6 @@
 
 Built entirely with **Kotlin** and **Jetpack Compose**
 
-[![Android API](https://img.shields.io/badge/API-26%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=26)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.5.15-green.svg)](https://developer.android.com/jetpack/compose)
-
 </div>
 
 ---
@@ -40,10 +36,9 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 
 
 ### Modern UI/UX
-- **Material 3 Design** - Beautiful, adaptive UI following Google's design principles
+- **Material 3 Design** - Beautiful, adaptive UI
 - **Dynamic Themes** - Colours that adapt to your content
-- **Ambient Backgrounds** - Stunning visual effects that enhance your viewing experience
-- **Responsive Layout** - Optimized for phones, tablets, and various screen sizes
+- **Responsive Layout** - Optimized for TV
 
 ### Advanced Features
 - **Transcoding support** - Choose from Auto, 1080p, 720p.
@@ -64,7 +59,7 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 </div>
 
 
-## 🛠️ Tech Stack & Architecture
+## Architecture
 
 ### Platform & Framework
 - **Target SDK**: 35 (Android 14)
@@ -79,12 +74,6 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 - **Navigation**: Navigation Compose
 - **State Management**: ViewModel + StateFlow
 
-### Media & Networking
-- **Media Player**: MPV-Android + ExoPlayer (Media3) with Jellyfin FFmpeg audio
-- **Image Loading**: Coil (with GIF/SVG support)
-- **Networking**: Retrofit + OkHttp
-- **Serialization**: Kotlinx Serialization
-- **Jellyfin SDK**: Jellyfin Core
 
 ### Storage & Persistence
 - **Database**: Room
@@ -92,18 +81,17 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 
 ### UI Components
 - **Design System**: Material 3
-- **Icons**: Material Icons Extended + Some MIT licence icons
+- **Icons**: Material Icons + Some MIT licence icons
 - **Responsive Design**: SDP/SSP Compose
 - **Color Extraction**: Palette API
-- **Permissions**: Accompanist Permissions
 
 ---
 
-## 🔧 Configuration
+## Playback
 
 ### Player Settings
 - **Primary Player**: MPV (recommended for best performance)
-- **Fallback Player**: ExoPlayer (better compatibility & HDR support)
+- **Fallback Player**: ExoPlayer with ffmpeg audio (better compatibility & HDR support)
 - **Display Mode**: Fit Screen, Fill Screen, Original Size
 - **Hardware Acceleration**: Enabled by default and automatically falls back to transcoding if it is not supported by the hardware.
 
@@ -115,7 +103,7 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 ### Special Thanks
 - **[Jellyfin Project](https://jellyfin.org/)** - For creating the amazing open-source media server.
@@ -123,14 +111,7 @@ Built entirely with **Kotlin** and **Jetpack Compose**
 - **[MPV](https://mpv.io/) & AndroidX Media3 teams** - For excellent media playback capabilities.
 - **[@nitanmarcel](https://github.com/nitanmarcel)** - For the mpv-compose library that powers our video playback.
 - **[jellyfin-androidx-media](https://github.com/jellyfin/jellyfin-androidx-media)** - For Media3 FFmpeg audio.
-### Built With Love Using
-- **Jetpack Compose** - Modern Android UI toolkit
-- **Material You** - Google's design system
-- **Kotlin Coroutines** - Asynchronous programming
-- **Hilt** - Dependency injection
-- **Coil** - Image loading library
 
----
 
 ## ☕ Support the Project
 

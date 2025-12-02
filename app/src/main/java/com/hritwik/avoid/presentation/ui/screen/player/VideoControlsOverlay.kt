@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -79,7 +78,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToLong
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoControlsOverlay(
     mediaTitle: String,
@@ -501,7 +499,7 @@ fun VideoControlsOverlay(
             .onFocusChanged { focusState ->
                 if (focusState.isFocused) {
                     focusArea = VideoControlsFocusArea.ROOT
-                    updateInteractionTime()
+                    updateInteractionTime(shouldShowControls = isVisible)
                 }
             }
             .onPreviewKeyEvent { event ->
@@ -668,11 +666,13 @@ fun VideoControlsOverlay(
                                         continuousSeekDirection = 0
                                         updateInteractionTime()
                                         true
-                                    } else if (focusArea == VideoControlsFocusArea.ROOT ||
+                                    } else if (isVisible && (
+                                        focusArea == VideoControlsFocusArea.ROOT ||
                                         focusArea == VideoControlsFocusArea.CONTROLS ||
                                         focusArea == VideoControlsFocusArea.PROGRESS_BAR ||
                                         focusArea == VideoControlsFocusArea.SKIP ||
-                                        focusArea == VideoControlsFocusArea.BOTTOM_OPTIONS) {
+                                        focusArea == VideoControlsFocusArea.BOTTOM_OPTIONS
+                                        )) {
                                         onDismissControls()
                                         true
                                     } else {
