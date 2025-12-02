@@ -76,6 +76,9 @@ fun MoviesScreen(
     val recentlyReleased = remember(libraryState.recentlyReleasedMovies) {
         libraryState.recentlyReleasedMovies.take(20)
     }
+    val recentlyWatched = remember(libraryState.recentlyWatchedItems) {
+        libraryState.recentlyWatchedItems.filter { it.type == ApiConstants.ITEM_TYPE_MOVIE }.take(20)
+    }
     val studios = remember(libraryState.movieStudios) { libraryState.movieStudios }
     val movieLibraries = remember(libraryState.libraries) {
         libraryState.libraries.filter { it.type == LibraryType.MOVIES }
@@ -86,6 +89,7 @@ fun MoviesScreen(
             recommendedMovies.isNotEmpty() ||
             recentlyAdded.isNotEmpty() ||
             recentlyReleased.isNotEmpty() ||
+            recentlyWatched.isNotEmpty() ||
             (studios.isNotEmpty() && primaryMovieLibrary != null)
 
     when {
@@ -178,6 +182,19 @@ fun MoviesScreen(
                         PosterRow(
                             title = "Recently Released",
                             items = recentlyReleased,
+                            serverUrl = serverUrl,
+                            sideNavigationFocusRequester = sideNavigationFocusRequester,
+                            onMediaItemClick = onMediaItemClick,
+                            onMediaItemFocus = onMediaItemFocus
+                        )
+                    }
+                }
+
+                if (recentlyWatched.isNotEmpty()) {
+                    item(key = "movies_recently_watched") {
+                        PosterRow(
+                            title = "Recently Watched",
+                            items = recentlyWatched,
                             serverUrl = serverUrl,
                             sideNavigationFocusRequester = sideNavigationFocusRequester,
                             onMediaItemClick = onMediaItemClick,

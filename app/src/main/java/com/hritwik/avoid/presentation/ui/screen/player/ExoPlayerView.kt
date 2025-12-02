@@ -372,16 +372,6 @@ fun ExoPlayerView(
         onDispose { windowInsetsController?.show(WindowInsetsCompat.Type.systemBars()) }
     }
 
-    LaunchedEffect(showControls, isSeeking) {
-        if (showControls) {
-            if (isSeeking) return@LaunchedEffect
-            delay(5000L)
-            if (!isSeeking) {
-                showControls = false
-            }
-        }
-    }
-
     LaunchedEffect(isPlaying, userId, accessToken, currentMediaItem.id) {
         if (!isPlaying) return@LaunchedEffect
         while (isPlaying) {

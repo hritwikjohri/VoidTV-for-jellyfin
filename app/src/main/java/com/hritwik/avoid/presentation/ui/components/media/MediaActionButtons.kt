@@ -47,7 +47,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.hritwik.avoid.domain.model.library.MediaItem
@@ -268,7 +268,7 @@ fun MediaActionButtons(
             ){
                 Row (
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(12).sdp)
+                    horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(14).sdp)
                 ){
                     Box(
                         modifier = Modifier
@@ -373,7 +373,7 @@ fun MediaActionButtons(
                     Row(
                         modifier = Modifier.padding(start = calculateRoundedValue(16).sdp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(8).sdp)
+                        horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(10).sdp)
                     ) {
                         EpisodeInfoChip(
                             label = "Resolution",
@@ -392,7 +392,7 @@ fun MediaActionButtons(
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(12).sdp)
+                    horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(14).sdp)
                 ) {
                     EpisodeInfoChip(
                         label = "Version",

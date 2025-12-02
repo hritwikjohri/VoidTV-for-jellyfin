@@ -41,7 +41,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.lerp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.hritwik.avoid.domain.model.library.MediaItem
@@ -189,9 +189,9 @@ fun EpisodeActionsRow(
             .fillMaxWidth()
             .padding(calculateRoundedValue(8).sdp)
             .heightIn(min = calculateRoundedValue(72).sdp),
-        verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(12).sdp)
+        verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(14).sdp)
     ) {
-        val chipSpacing = calculateRoundedValue(12).sdp
+        val chipSpacing = calculateRoundedValue(14).sdp
         val playInteractionSource = remember { MutableInteractionSource() }
         val versionInteractionSource = remember { MutableInteractionSource() }
         val audioInteractionSource = remember { MutableInteractionSource() }
@@ -332,7 +332,7 @@ fun EpisodeActionsRow(
             Row(
                 modifier = Modifier,
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(chipSpacing)
+                horizontalArrangement = Arrangement.spacedBy(chipSpacing * 1.2f)
             ) {
                 EpisodeInfoChip(
                     label = "Version",
@@ -460,7 +460,7 @@ fun EpisodeInfoChip(
     focusRequester: FocusRequester? = null,
     accentColor: Color? = null,
 ) {
-    val shape = RoundedCornerShape(calculateRoundedValue(12).sdp)
+    val shape = RoundedCornerShape(calculateRoundedValue(14).sdp)
     val resolvedInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
     val focusAccentColor = accentColor ?: Minsk
 
@@ -481,7 +481,7 @@ fun EpisodeInfoChip(
 
     val isFocused by resolvedInteractionSource.collectIsFocusedAsState()
     val focusScale by animateFloatAsState(
-        targetValue = if (isFocused) 1.04f else 1f,
+        targetValue = if (isFocused) 1.048f else 1f,
         animationSpec = tween(durationMillis = 80),
         label = "chipScale"
     )
@@ -531,12 +531,12 @@ fun EpisodeInfoChip(
         Text(
             text = textContent,
             modifier = Modifier.padding(
-                horizontal = calculateRoundedValue(10).sdp,
-                vertical = calculateRoundedValue(4).sdp
+                horizontal = calculateRoundedValue(12).sdp,
+                vertical = calculateRoundedValue(5).sdp
             ),
             style = MaterialTheme.typography.labelMedium,
             color = textColor,
-            fontSize = calculateRoundedValue(10).ssp
+            fontSize = calculateRoundedValue(12).ssp
         )
     }
 

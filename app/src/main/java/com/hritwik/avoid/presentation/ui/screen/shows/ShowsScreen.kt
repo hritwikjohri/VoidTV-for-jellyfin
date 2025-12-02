@@ -74,6 +74,11 @@ fun ShowsScreen(
     val recentlyReleased = remember(libraryState.recentlyReleasedShows) {
         libraryState.recentlyReleasedShows.take(20)
     }
+    val recentlyWatched = remember(libraryState.recentlyWatchedItems) {
+        libraryState.recentlyWatchedItems
+            .filter { it.type == ApiConstants.ITEM_TYPE_EPISODE || it.type == ApiConstants.ITEM_TYPE_SERIES }
+            .take(20)
+    }
     val studios = remember(libraryState.showStudios) { libraryState.showStudios }
     val showLibrary = remember(libraryState.libraries) {
         libraryState.libraries.firstOrNull { it.type == LibraryType.TV_SHOWS }
@@ -83,6 +88,7 @@ fun ShowsScreen(
             nextUpItems.isNotEmpty() ||
             recentlyAdded.isNotEmpty() ||
             recentlyReleased.isNotEmpty() ||
+            recentlyWatched.isNotEmpty() ||
             (studios.isNotEmpty() && showLibrary != null)
 
     when {
@@ -176,6 +182,20 @@ fun ShowsScreen(
                             sideNavigationFocusRequester = sideNavigationFocusRequester,
                             onMediaItemClick = onMediaItemClick,
                             onMediaItemFocus = onMediaItemFocus
+                        )
+                    }
+                }
+
+                if (recentlyWatched.isNotEmpty()) {
+                    item(key = "shows_recently_watched") {
+                        BackdropRow(
+                            title = "Recently Watched",
+                            items = recentlyWatched,
+                            serverUrl = serverUrl,
+                            sideNavigationFocusRequester = sideNavigationFocusRequester,
+                            onMediaItemClick = onMediaItemClick,
+                            onMediaItemFocus = onMediaItemFocus,
+                            showProgress = false
                         )
                     }
                 }

@@ -22,6 +22,7 @@ import com.hritwik.avoid.domain.usecase.library.GetRecommendedItemsUseCase
 import com.hritwik.avoid.domain.usecase.library.GetResumeItemsUseCase
 import com.hritwik.avoid.domain.repository.LibraryRepository
 import com.hritwik.avoid.domain.usecase.library.GetUserLibrariesUseCase
+import com.hritwik.avoid.domain.usecase.library.GetPlayedItemsUseCase
 import com.hritwik.avoid.domain.model.library.LibrarySortDirection
 import com.hritwik.avoid.domain.model.library.LibraryType
 import com.hritwik.avoid.domain.usecase.media.GetMediaItemDetailUseCase
@@ -67,6 +68,7 @@ class LibraryViewModel @Inject constructor(
     private val getLibraryGenresUseCase: GetLibraryGenresUseCase,
     private val getItemsByCategoryUseCase: GetItemsByCategoryUseCase,
     private val getCollectionsUseCase: GetCollectionsUseCase,
+    private val getPlayedItemsUseCase: GetPlayedItemsUseCase,
     private val libraryRepository: LibraryRepository,
     private val libraryAlphaDao: LibraryAlphaDao,
     private val libraryGridCacheDao: LibraryGridCacheDao
@@ -363,6 +365,15 @@ class LibraryViewModel @Inject constructor(
                 val latestMoviesDeferred = async {
                     getLatestMoviesUseCase(GetLatestMoviesUseCase.Params(userId, accessToken))
                 }
+                val recentlyWatchedDeferred = async {
+                    getPlayedItemsUseCase(
+                        GetPlayedItemsUseCase.Params(
+                            userId = userId,
+                            accessToken = accessToken,
+                            limit = 20
+                        )
+                    )
+                }
                 val recommendedItemsDeferred = async {
                     getRecommendedItemsUseCase(
                         GetRecommendedItemsUseCase.Params(
@@ -386,6 +397,7 @@ class LibraryViewModel @Inject constructor(
                 val latestItemsResult = latestItemsDeferred.await()
                 val resumeItemsResult = resumeItemsDeferred?.await()
                 val latestMoviesResult = latestMoviesDeferred.await()
+                val recentlyWatchedResult = recentlyWatchedDeferred.await()
                 val recommendedItemsResult = recommendedItemsDeferred.await()
                 val collectionsResult = collectionsDeferred.await()
 
@@ -450,6 +462,18 @@ class LibraryViewModel @Inject constructor(
                     }
                     is NetworkResult.Error -> {
                         println("Failed to load latest movies: ${latestMoviesResult.message}")
+                    }
+                    is NetworkResult.Loading -> {}
+                }
+
+                when (recentlyWatchedResult) {
+                    is NetworkResult.Success -> {
+                        _libraryState.value = _libraryState.value.copy(
+                            recentlyWatchedItems = recentlyWatchedResult.data
+                        )
+                    }
+                    is NetworkResult.Error -> {
+                        println("Failed to load recently watched items: ${recentlyWatchedResult.message}")
                     }
                     is NetworkResult.Loading -> {}
                 }

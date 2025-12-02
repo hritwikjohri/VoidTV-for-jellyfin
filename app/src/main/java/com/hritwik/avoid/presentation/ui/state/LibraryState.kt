@@ -33,6 +33,7 @@ data class LibraryState(
     val trendingItems: List<MediaItem> = emptyList(),
     val favoriteItems: List<MediaItem> = emptyList(),
     val watchlistItems: List<MediaItem> = emptyList(),
+    val recentlyWatchedItems: List<MediaItem> = emptyList(),
     val collections: List<MediaItem> = emptyList(),
 
     
