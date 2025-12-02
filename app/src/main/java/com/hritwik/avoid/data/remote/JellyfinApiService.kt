@@ -136,6 +136,7 @@ interface JellyfinApiService {
     @GET("Users/{userId}/Items/Latest")
     suspend fun getLatestItems(
         @Path("userId") userId: String,
+        @Query("ParentId") parentId: String? = null,
         @Query("Limit") limit: Int = 20,
         @Query("Fields") fields: String = ApiConstants.FIELDS_BASIC,  
         @Query("EnableImageTypes") enableImageTypes: String? = "Primary",

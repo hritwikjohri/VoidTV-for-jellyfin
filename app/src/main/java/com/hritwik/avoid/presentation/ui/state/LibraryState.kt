@@ -14,6 +14,7 @@ data class LibraryState(
 
     
     val latestItems: List<MediaItem> = emptyList(),
+    val latestItemsByLibrary: Map<String, List<MediaItem>> = emptyMap(),
     val resumeItems: List<MediaItem> = emptyList(),
     val nextUpEpisodes: List<MediaItem> = emptyList(),
 

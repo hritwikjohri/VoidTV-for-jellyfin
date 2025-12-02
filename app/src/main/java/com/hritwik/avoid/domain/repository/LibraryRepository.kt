@@ -54,7 +54,8 @@ interface LibraryRepository {
     suspend fun getLatestItems(
         userId: String,
         accessToken: String,
-        limit: Int = 20
+        limit: Int = 20,
+        libraryId: String? = null
     ): NetworkResult<List<MediaItem>>
     suspend fun getResumeItems(
         userId: String,

@@ -7,6 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.hritwik.avoid.data.common.NetworkResult
+import com.hritwik.avoid.domain.model.library.Library
 import com.hritwik.avoid.domain.model.library.MediaItem
 import com.hritwik.avoid.domain.usecase.library.GetLatestEpisodesUseCase
 import com.hritwik.avoid.domain.usecase.library.GetLatestItemsUseCase
@@ -40,6 +41,7 @@ import com.hritwik.avoid.presentation.viewmodel.library.LibraryGridWindowCache
 import com.hritwik.avoid.presentation.viewmodel.library.toMediaItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -399,6 +401,13 @@ class LibraryViewModel @Inject constructor(
                         )
                         showsLibraryId = librariesResult.data.firstOrNull { it.type == LibraryType.TV_SHOWS }?.id
                         moviesLibraryId = librariesResult.data.firstOrNull { it.type == LibraryType.MOVIES }?.id
+                        launch {
+                            loadLatestItemsByLibrary(
+                                userId = userId,
+                                accessToken = accessToken,
+                                libraries = librariesResult.data
+                            )
+                        }
                     }
                     is NetworkResult.Error -> {
                         _libraryState.value = _libraryState.value.copy(
@@ -643,6 +652,40 @@ class LibraryViewModel @Inject constructor(
                     isLoading = false
                 )
             }
+        }
+    }
+
+    private suspend fun loadLatestItemsByLibrary(
+        userId: String,
+        accessToken: String,
+        libraries: List<Library>
+    ) {
+        if (libraries.isEmpty()) {
+            _libraryState.update { state -> state.copy(latestItemsByLibrary = emptyMap()) }
+            return
+        }
+
+        _libraryState.update { state -> state.copy(latestItemsByLibrary = emptyMap()) }
+
+        val latestByLibrary = coroutineScope {
+            libraries.associate { library ->
+                library.id to async {
+                    when (val result = getLatestItemsUseCase(
+                        GetLatestItemsUseCase.Params(
+                            userId = userId,
+                            accessToken = accessToken,
+                            libraryId = library.id
+                        )
+                    )) {
+                        is NetworkResult.Success -> result.data
+                        else -> emptyList()
+                    }
+                }
+            }.mapValues { (_, deferred) -> deferred.await() }
+        }.filterValues { it.isNotEmpty() }
+
+        _libraryState.update { state ->
+            state.copy(latestItemsByLibrary = latestByLibrary)
         }
     }
 

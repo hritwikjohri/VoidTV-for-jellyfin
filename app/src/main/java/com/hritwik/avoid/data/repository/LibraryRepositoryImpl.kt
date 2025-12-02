@@ -267,7 +267,11 @@ class LibraryRepositoryImpl @Inject constructor(
                 }
                 val latestItemsDeferred = async {
                     try {
-                        val items = apiService.getLatestItems(userId, limit, authorization = authHeader)
+                        val items = apiService.getLatestItems(
+                            userId = userId,
+                            limit = limit,
+                            authorization = authHeader
+                        )
                             .map { dto -> mapToMediaItem(dto) }
                         Result.success(items)
                     } catch (t: Throwable) {
@@ -526,7 +530,8 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun getLatestItems(
         userId: String,
         accessToken: String,
-        limit: Int
+        limit: Int,
+        libraryId: String?
     ): NetworkResult<List<MediaItem>> {
         val serverUrl = getServerUrl()
         return safeApiCall(serverUrl) {
@@ -535,6 +540,7 @@ class LibraryRepositoryImpl @Inject constructor(
             val authHeader = JellyfinApiService.createAuthHeader(deviceId, token = accessToken)
             val response = apiService.getLatestItems(
                 userId = userId,
+                parentId = libraryId,
                 limit = limit,
                 enableImageTypes = DEFAULT_MEDIA_IMAGE_TYPES,
                 authorization = authHeader
