@@ -3,6 +3,7 @@ package com.hritwik.avoid.presentation.viewmodel.auth
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hritwik.avoid.R
@@ -223,30 +224,124 @@ class AuthServerViewModel @Inject constructor(
         }
     }
 
+    private fun stopRemoteConfigServer() {
+        configServer?.stop()
+        configServer = null
+        _state.update { current ->
+            current.copy(
+                localConfigServerPort = null,
+                configServerWarning = null,
+                configServerError = null
+            )
+        }
+    }
+
     private fun isPermissionDenied(error: Throwable?): Boolean {
         val message = error?.message?.lowercase() ?: return false
         return "permission denied" in message || "eacces" in message
     }
 
+    private suspend fun applyRemoteMtlsConfig(payload: RemoteServerConfigPayload): Boolean {
+        val certificateBase64 = payload.mtlsCertificate?.takeIf { it.isNotBlank() }
+            ?: payload.mtlsCertificateBase64?.takeIf { it.isNotBlank() }
+
+        if (certificateBase64.isNullOrBlank()) {
+            return true
+        }
+
+        if (certificateBase64.length > MAX_MTLS_CERT_BYTES * 4 / 3 + 16) {
+            _state.update { current -> current.copy(mtlsError = "Provided mTLS certificate is too large.") }
+            return false
+        }
+
+        val certificateBytes = runCatching {
+            Base64.decode(certificateBase64, Base64.DEFAULT)
+        }.onFailure { error ->
+            _state.update { current ->
+                current.copy(
+                    mtlsError = error.message ?: "Invalid mTLS certificate payload"
+                )
+            }
+        }.getOrNull() ?: return false
+
+        if (certificateBytes.isEmpty()) {
+            _state.update { current ->
+                current.copy(mtlsError = "Provided mTLS certificate is empty")
+            }
+            return false
+        }
+        if (certificateBytes.size > MAX_MTLS_CERT_BYTES) {
+            _state.update { current -> current.copy(mtlsError = "Provided mTLS certificate is too large.") }
+            return false
+        }
+
+        val displayName = payload.mtlsCertificateName?.takeIf { it.isNotBlank() }
+            ?: "mtls_certificate"
+        val password = payload.mtlsCertificatePassword ?: ""
+        val shouldEnable = payload.mtlsEnabled ?: true
+
+        return try {
+            preferencesManager.saveMtlsCertificate(certificateBytes, displayName)
+            preferencesManager.setMtlsCertificatePassword(password)
+            preferencesManager.setMtlsEnabled(shouldEnable)
+
+            pendingMtlsPassword = password
+            _state.update { current ->
+                current.copy(
+                    isMtlsEnabled = shouldEnable,
+                    mtlsCertificateName = displayName,
+                    mtlsCertificatePassword = password,
+                    mtlsError = null
+                )
+            }
+            true
+        } catch (error: Exception) {
+            _state.update { current ->
+                current.copy(
+                    mtlsError = error.message ?: "Failed to import certificate"
+                )
+            }
+            false
+        }
+    }
+
     private fun handleRemoteConfigPayload(payload: RemoteServerConfigPayload) {
         viewModelScope.launch {
-            val token = payload.quickConnectToken?.takeIf { it.isNotBlank() }
-                ?: payload.mediaToken?.takeIf { it.isNotBlank() }
+            val quickConnectToken = payload.quickConnectToken?.takeIf { it.isNotBlank() }
+            val mediaToken = payload.mediaToken?.takeIf { it.isNotBlank() }
             val targetUrl = payload.quickConnectUrl?.takeIf { it.isNotBlank() }
                 ?: resolvePayloadUrl(payload)
+            val username = payload.username?.takeIf { it.isNotBlank() }
+            val password = payload.password?.takeIf { it.isNotBlank() }
 
-            if (token != null && !targetUrl.isNullOrBlank()) {
-                prepareQuickConnectAuthorization(targetUrl, token)
+            val mtlsReady = applyRemoteMtlsConfig(payload)
+            if (!mtlsReady) {
                 return@launch
             }
 
-            if (token != null) {
-                _state.update { current -> current.copy(receivedMediaToken = token) }
+            if (quickConnectToken != null && !targetUrl.isNullOrBlank()) {
+                prepareQuickConnectAuthorization(targetUrl, quickConnectToken)
+                return@launch
+            }
+
+            if (mediaToken != null) {
+                _state.update { current -> current.copy(receivedMediaToken = mediaToken) }
+            }
+
+            if (!targetUrl.isNullOrBlank() && mediaToken != null) {
+                _state.update { current -> current.copy(serverUrl = targetUrl) }
+                connectToServer(targetUrl, mediaToken)
+                return@launch
             }
 
             if (!targetUrl.isNullOrBlank()) {
                 _state.update { current -> current.copy(serverUrl = targetUrl) }
                 connectToServer(targetUrl)
+                if (username != null && password != null) {
+                    login(username, password)
+                }
+            } else if (username != null && password != null) {
+                login(username, password)
             }
         }
     }
@@ -561,6 +656,7 @@ class AuthServerViewModel @Inject constructor(
                             error = null
                         )
                     }
+                    stopRemoteConfigServer()
                 }
                 is NetworkResult.Error -> {
                     _state.update { current ->
@@ -594,6 +690,7 @@ class AuthServerViewModel @Inject constructor(
                         authSession = result.data,
                         error = null
                     )
+                    stopRemoteConfigServer()
                 }
                 is NetworkResult.Error -> {
                     val errorMessage = if (result.message.contains("timed out", ignoreCase = true)) {
@@ -764,6 +861,7 @@ class AuthServerViewModel @Inject constructor(
                                             quickConnectState = QuickConnectState()
                                         )
                                     }
+                                    stopRemoteConfigServer()
                                     return@launch
                                 }
                                 is NetworkResult.Error -> {
@@ -954,6 +1052,9 @@ class AuthServerViewModel @Inject constructor(
                             }
                         }
                         _state.value = updatedState
+                        if (updatedState.isAuthenticated) {
+                            stopRemoteConfigServer()
+                        }
                     } else {
                         _state.value = _state.value.copy(
                             isLoading = false,
@@ -1057,5 +1158,6 @@ class AuthServerViewModel @Inject constructor(
         private const val CONFIG_SERVER_PORT = 8000
         private const val CONFIG_SERVER_FALLBACK_PORT = 8097
         private const val SERVER_SOCKET_TIMEOUT = 10_000
+        private const val MAX_MTLS_CERT_BYTES = 512 * 1024
     }
 }

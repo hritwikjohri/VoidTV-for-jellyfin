@@ -2087,7 +2087,7 @@ class LibraryRepositoryImpl @Inject constructor(
                             enableMpegtsM2TsMode = true,
                             transcodeSeekInfo = "Auto",
                             copyTimestamps = true,
-                            enableSubtitlesInManifest = true,
+                            enableSubtitlesInManifest = false,
                             enableAudioVbrEncoding = true,
                             breakOnNonKeyFrames = false,
                             maxAudioChannels = 6,

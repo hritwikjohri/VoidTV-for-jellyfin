@@ -16,8 +16,8 @@ android {
         applicationId = "com.hritwik.avoid"
         minSdk = 26
         targetSdk = 36
-        versionCode = 22
-        versionName = "0.2.7tv"
+        versionCode = 25
+        versionName = "Alpha-0.2.8tv"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
