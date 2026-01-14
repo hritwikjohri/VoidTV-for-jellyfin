@@ -7,7 +7,7 @@
 
 **A modern, powerful, feature-rich client for Jellyfin**
 
-Built entirely with **Kotlin** and **Jetpack Compose**
+Built with **Kotlin** and **Jetpack Compose**
 
 </div>
 
