@@ -45,6 +45,8 @@ coilVersion = "1.0.6"
 zxing = "3.5.4"
 nanohttpd = "2.3.1"
 media3FfmpegDecoder = "1.8.0+1"
+conscrypt = "2.5.3"
+bouncycastle = "1.83"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -132,6 +134,8 @@ zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 media3-ffmpeg-decoder = { module = "org.jellyfin.media3:media3-ffmpeg-decoder", version.ref = "media3FfmpegDecoder" }
 tink = { module = "com.google.crypto.tink:tink-android", version.ref = "tink" }
+conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "bouncycastle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -140,4 +144,3 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-

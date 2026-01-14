@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.net.toUri
@@ -14,6 +15,7 @@ import coil.Coil
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import com.hritwik.avoid.data.cache.CacheManager
 import com.hritwik.avoid.data.network.CdnInterceptor
 import com.hritwik.avoid.data.local.PreferencesManager
@@ -32,7 +34,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import org.conscrypt.Conscrypt
 import java.io.File
+import java.security.Security
 import java.util.Locale
 import javax.inject.Inject
 
@@ -62,6 +66,8 @@ class VoidApplication : Application() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        installBouncyCastleProvider()
+        installConscryptProvider()
         applicationScope.launch(crashHandler) { copyBundledFonts() }
         applyTheme()
         val coilOkHttpClient = okHttpClient.newBuilder()
@@ -180,6 +186,28 @@ class VoidApplication : Application() {
         } else {
             @Suppress("DEPRECATION")
             resources.updateConfiguration(newConfig, resources.displayMetrics)
+        }
+    }
+
+    private fun installConscryptProvider() {
+        if (Security.getProvider("Conscrypt") != null) return
+        runCatching {
+            Security.insertProviderAt(Conscrypt.newProvider(), 1)
+        }.onFailure { error ->
+            Log.w("VoidApplication", "Conscrypt provider install failed", error)
+        }
+    }
+
+    private fun installBouncyCastleProvider() {
+        val existing = Security.getProvider("BC")
+        if (existing?.javaClass?.name == BouncyCastleProvider::class.java.name) return
+        runCatching {
+            if (existing != null) {
+                Security.removeProvider("BC")
+            }
+            Security.insertProviderAt(BouncyCastleProvider(), 1)
+        }.onFailure { error ->
+            Log.w("VoidApplication", "BouncyCastle provider install failed", error)
         }
     }
 

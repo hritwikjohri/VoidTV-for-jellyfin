@@ -205,6 +205,8 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.nanohttpd)
     implementation(libs.tink)
+    implementation(libs.conscrypt.android)
+    implementation(libs.bouncycastle)
     ksp(libs.androidx.room.compiler)
 
     

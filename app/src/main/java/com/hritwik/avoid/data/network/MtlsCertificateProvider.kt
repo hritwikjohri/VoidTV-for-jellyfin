@@ -9,6 +9,7 @@ import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.concurrent.atomic.AtomicBoolean
+import java.security.Security
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.net.ssl.KeyManagerFactory
@@ -70,7 +71,7 @@ class MtlsCertificateProvider @Inject constructor(
             runCatching {
                 val passwordChars = password.toCharArray()
                 try {
-                    val keyStore = KeyStore.getInstance("PKCS12")
+                    val keyStore = createPkcs12KeyStore()
                     ByteArrayInputStream(certificateBytes).use { input ->
                         keyStore.load(input, passwordChars)
                     }
@@ -86,7 +87,8 @@ class MtlsCertificateProvider @Inject constructor(
                     passwordChars.fill('\u0000')
                 }
             }.onFailure { error ->
-                Log.e(TAG, "Failed to load mTLS certificate", error)
+                val bcInstalled = Security.getProvider("BC") != null
+                Log.e(TAG, "Failed to load mTLS certificate (bouncyCastleInstalled=$bcInstalled)", error)
             }.getOrNull()
         }
     }
@@ -144,6 +146,16 @@ class MtlsCertificateProvider @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun createPkcs12KeyStore(): KeyStore {
+        val bcProvider = Security.getProvider("BC")
+        if (bcProvider != null) {
+            runCatching {
+                return KeyStore.getInstance("PKCS12", bcProvider)
+            }
+        }
+        return KeyStore.getInstance("PKCS12")
     }
 }
 
