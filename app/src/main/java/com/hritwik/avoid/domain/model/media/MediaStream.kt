@@ -29,6 +29,7 @@ data class MediaStream(
     val videoRange: String? = null,
     val videoRangeType: String? = null,
     val videoDoViTitle: String? = null,
+    val dvProfile: Int? = null,
     val profile: String? = null,
     val bitDepth: Int? = null
 ) : Parcelable {

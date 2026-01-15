@@ -2,6 +2,7 @@ package com.hritwik.avoid.presentation.ui.screen.player
 
 import android.content.Context
 import android.media.AudioManager
+import android.os.Build
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
@@ -76,6 +77,7 @@ import com.hritwik.avoid.utils.extensions.findActivity
 import com.hritwik.avoid.utils.extensions.getSubtitleUrl
 import com.hritwik.avoid.utils.extensions.toSubtitleFileExtension
 import com.hritwik.avoid.utils.helpers.calculateRoundedValue
+import com.hritwik.avoid.utils.helpers.FrameRateHelper
 import dev.marcelsoftware.mpvcompose.DefaultLogObserver
 import dev.marcelsoftware.mpvcompose.MPVLib
 import dev.marcelsoftware.mpvcompose.MPVPlayer
@@ -110,6 +112,8 @@ fun MpvPlayerView(
     val mpvConfigOptions = remember(context) { MpvConfig.readOptions(context) }
     val mpvConfigKeys = remember(mpvConfigOptions) { mpvConfigOptions.keys.map { it.lowercase() }.toSet() }
     val currentMediaItem = playerState.mediaItem ?: mediaItem
+    val contentFrameRate = playerState.playbackOptions.selectedVideoStream?.frameRate
+    val mpvRootView = LocalView.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val audioFocusRequest = rememberAudioFocusRequest(audioManager)
@@ -127,6 +131,7 @@ fun MpvPlayerView(
     var isBuffering by remember { mutableStateOf(false) }
     var isSeeking by remember { mutableStateOf(false) }
     var isMpvInitialized by remember { mutableStateOf(false) }
+    var lastAppliedFrameRate by remember { mutableStateOf<Float?>(null) }
     val window = activity?.window
     var brightness by remember {
         mutableFloatStateOf(window?.attributes?.screenBrightness?.takeIf { it >= 0 } ?: 0.5f)
@@ -574,6 +579,21 @@ fun MpvPlayerView(
         }
     }
 
+    LaunchedEffect(contentFrameRate, isMpvInitialized) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return@LaunchedEffect
+        if (!isMpvInitialized) return@LaunchedEffect
+        val rate = contentFrameRate?.takeIf { it > 0f } ?: return@LaunchedEffect
+        if (lastAppliedFrameRate == rate) return@LaunchedEffect
+        val applied = FrameRateHelper.requestFrameRate(
+            surfaceProvider = { FrameRateHelper.findSurfaceView(mpvRootView) },
+            frameRate = rate
+        )
+        if (applied) {
+            lastAppliedFrameRate = rate
+            FrameRateHelper.showFrameRateToast(context, rate)
+        }
+    }
+
     LaunchedEffect(playerState.subtitleOffsetMs, isMpvInitialized) {
         if (!isMpvInitialized) return@LaunchedEffect
         MPVLib.setPropertyDouble("sub-delay", playerState.subtitleOffsetMs / 1000.0)
@@ -764,10 +784,12 @@ fun MpvPlayerView(
                 MPVLib.setPropertyBoolean("pause", !isPlaying)
             },
             onSeek = { position ->
+                cancelAutoSkip()
                 isSeeking = true
                 playbackProgress = position
             },
             onSeekComplete = { position ->
+                cancelAutoSkip()
                 MPVLib.command(arrayOf("seek", position.toString(), "absolute"))
                 isSeeking = false
                 videoPlaybackViewModel.savePlaybackPosition(currentMediaItem.id, userId, accessToken, position)
@@ -786,9 +808,11 @@ fun MpvPlayerView(
             onDismissControls = { showControls = false },
             onShowControls = { showControls = true },
             onSkipBackward = {
+                cancelAutoSkip()
                 MPVLib.command(arrayOf("seek", "-10", "relative"))
             },
             onSkipForward = {
+                cancelAutoSkip()
                 MPVLib.command(arrayOf("seek", "10", "relative"))
             },
             skipButtonVisible = showOverlaySkipButton,

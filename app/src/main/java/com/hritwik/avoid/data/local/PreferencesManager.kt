@@ -19,6 +19,7 @@ import com.hritwik.avoid.domain.model.auth.ServerConnectionMethod
 import com.hritwik.avoid.domain.model.playback.DecoderMode
 import com.hritwik.avoid.domain.model.playback.DisplayMode
 import com.hritwik.avoid.domain.model.playback.PlayerType
+import com.hritwik.avoid.domain.model.playback.HdrFormatPreference
 import com.hritwik.avoid.utils.constants.PreferenceConstants
 import com.hritwik.avoid.utils.helpers.CodecDetector
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -129,6 +130,7 @@ class PreferencesManager @Inject constructor(
         private val AUDIO_PASSTHROUGH_ENABLED = booleanPreferencesKey(PreferenceConstants.KEY_AUDIO_PASSTHROUGH_ENABLED)
         private val DIRECT_PLAY_ENABLED = booleanPreferencesKey(PreferenceConstants.KEY_DIRECT_PLAY_ENABLED)
         private val PREFER_HDR_OVER_DV = booleanPreferencesKey(PreferenceConstants.KEY_PREFER_HDR_OVER_DV)
+        private val HDR_FORMAT_PREFERENCE = stringPreferencesKey(PreferenceConstants.KEY_HDR_FORMAT_PREFERENCE)
 
         private const val TINK_KEYSET_PREF = "void_tink_keyset"
         private const val TINK_KEYSET_NAME = "tink_keyset"
@@ -277,6 +279,14 @@ class PreferencesManager @Inject constructor(
             }
             if (!preferences.contains(PREFER_HDR_OVER_DV)) {
                 preferences[PREFER_HDR_OVER_DV] = preferHdrOverDolbyVisionDefault
+            }
+            if (!preferences.contains(HDR_FORMAT_PREFERENCE)) {
+                val preferHdr = preferences[PREFER_HDR_OVER_DV] ?: preferHdrOverDolbyVisionDefault
+                preferences[HDR_FORMAT_PREFERENCE] = if (preferHdr) {
+                    HdrFormatPreference.HDR10_PLUS.value
+                } else {
+                    PreferenceConstants.DEFAULT_HDR_FORMAT_PREFERENCE
+                }
             }
         }
     }
@@ -720,6 +730,11 @@ class PreferencesManager @Inject constructor(
         preferences[PREFER_HDR_OVER_DV] ?: preferHdrOverDolbyVisionDefault
     }
 
+    fun getHdrFormatPreference(): Flow<HdrFormatPreference> = dataStore.data.map { preferences ->
+        val raw = preferences[HDR_FORMAT_PREFERENCE] ?: PreferenceConstants.DEFAULT_HDR_FORMAT_PREFERENCE
+        HdrFormatPreference.fromValue(raw)
+    }
+
     
 
     fun getImageCacheSize(): Flow<Long> = dataStore.data.map { preferences ->
@@ -900,6 +915,12 @@ class PreferencesManager @Inject constructor(
     suspend fun savePreferHdrOverDolbyVision(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PREFER_HDR_OVER_DV] = enabled
+        }
+    }
+
+    suspend fun saveHdrFormatPreference(preference: HdrFormatPreference) {
+        dataStore.edit { preferences ->
+            preferences[HDR_FORMAT_PREFERENCE] = preference.value
         }
     }
 

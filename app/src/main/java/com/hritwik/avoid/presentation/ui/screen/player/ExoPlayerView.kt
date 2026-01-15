@@ -3,8 +3,10 @@ package com.hritwik.avoid.presentation.ui.screen.player
 import android.content.Context
 import android.graphics.Typeface
 import android.media.AudioManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.view.SurfaceView
 import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
@@ -67,9 +69,12 @@ import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.mediacodec.MediaCodecInfo
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.ffmpeg.FilteringExtractorsFactory
 import androidx.media3.exoplayer.text.SubtitleDecoderFactory
 import androidx.media3.exoplayer.text.TextRenderer
 import androidx.media3.exoplayer.video.VideoRendererEventListener
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ffmpeg.FfmpegFilteringMode
 import androidx.media3.extractor.text.SubtitleDecoder
 import androidx.media3.extractor.text.SubtitleInputBuffer
 import androidx.media3.extractor.text.SubtitleOutputBuffer
@@ -80,6 +85,7 @@ import com.hritwik.avoid.domain.model.library.MediaItem
 import com.hritwik.avoid.domain.model.media.MediaStream
 import com.hritwik.avoid.domain.model.playback.DecoderMode
 import com.hritwik.avoid.domain.model.playback.DisplayMode
+import com.hritwik.avoid.domain.model.playback.HdrFormatPreference
 import com.hritwik.avoid.presentation.ui.components.common.rememberAudioFocusRequest
 import com.hritwik.avoid.presentation.ui.components.dialogs.AudioTrackDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.DecoderSelectionDialog
@@ -101,7 +107,9 @@ import com.hritwik.avoid.utils.extensions.getSubtitleUrl
 import com.hritwik.avoid.utils.extensions.showToast
 import com.hritwik.avoid.utils.extensions.toSubtitleFileExtension
 import com.hritwik.avoid.utils.extensions.findActivity
+import com.hritwik.avoid.utils.helpers.CodecDetector
 import com.hritwik.avoid.utils.helpers.calculateRoundedValue
+import com.hritwik.avoid.utils.helpers.FrameRateHelper
 import ir.kaaveh.sdpcompose.sdp
 import kotlinx.coroutines.delay
 import java.io.File
@@ -126,7 +134,7 @@ fun ExoPlayerView(
     serverUrl: String,
     autoSkipSegments: Boolean,
     audioPassthroughEnabled: Boolean,
-    preferHdrOverDolbyVision: Boolean,
+    hdrFormatPreference: HdrFormatPreference,
     gesturesEnabled: Boolean,
     onBackClick: () -> Unit,
     viewModel: VideoPlaybackViewModel,
@@ -148,6 +156,8 @@ fun ExoPlayerView(
     var gestureFeedback by remember { mutableStateOf<GestureFeedback?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
     var exoPlayerRef by remember { mutableStateOf<ExoPlayer?>(null) }
+    var lastAppliedFrameRate by remember { mutableStateOf<Float?>(null) }
+    val contentFrameRate = playerState.playbackOptions.selectedVideoStream?.frameRate
     val window = activity?.window
     var brightness by remember {
         mutableFloatStateOf(window?.attributes?.screenBrightness?.takeIf { it >= 0 } ?: 0.5f)
@@ -463,6 +473,16 @@ fun ExoPlayerView(
             subtitleStreams.firstOrNull { it.index == playerState.subtitleStreamIndex }
         }
 
+        val effectiveHdrPreference = remember(
+            hdrFormatPreference,
+            playerState.playbackOptions.selectedVideoStream
+        ) {
+            resolveHdrPreferenceForStream(
+                preference = hdrFormatPreference,
+                videoStream = playerState.playbackOptions.selectedVideoStream
+            )
+        }
+
         val mediaItemWithSubtitles = remember(baseItem, selectedSubtitleStream, isLocalFile) {
             baseItem?.let { mediaItemBase ->
                 when {
@@ -491,17 +511,29 @@ fun ExoPlayerView(
             }
         }
 
-        val exoPlayer = remember(decoderMode, playerState.cacheDataSourceFactory, audioPassthroughEnabled, preferHdrOverDolbyVision) {
+        val exoPlayer = remember(
+            decoderMode,
+            playerState.cacheDataSourceFactory,
+            audioPassthroughEnabled,
+            effectiveHdrPreference
+        ) {
+            val filteringMode = when (effectiveHdrPreference) {
+                HdrFormatPreference.HDR10_PLUS -> FfmpegFilteringMode.KEEP_HDR10_BASE
+                HdrFormatPreference.DOLBY_VISION -> FfmpegFilteringMode.KEEP_DOLBY_VISION
+                else -> FfmpegFilteringMode.AUTO
+            }
+            val extractorsFactory = FilteringExtractorsFactory(DefaultExtractorsFactory(), filteringMode)
+            val mediaSourceFactory = playerState.cacheDataSourceFactory?.let { cacheFactory ->
+                DefaultMediaSourceFactory(cacheFactory, extractorsFactory)
+            } ?: DefaultMediaSourceFactory(context, extractorsFactory)
             val renderersFactory = createRenderersFactory(
                 context = context,
                 decoderMode = decoderMode,
                 enableAudioPassthrough = audioPassthroughEnabled,
-                preferHdrOverDolbyVision = preferHdrOverDolbyVision
+                hdrFormatPreference = effectiveHdrPreference
             ) { viewModel.state.value.subtitleOffsetMs }
             val builder = ExoPlayer.Builder(context, renderersFactory)
-            playerState.cacheDataSourceFactory?.let { factory ->
-                builder.setMediaSourceFactory(DefaultMediaSourceFactory(factory))
-            }
+            builder.setMediaSourceFactory(mediaSourceFactory)
             builder.build().apply {
                 playWhenReady = true
                 volume = (playerState.volume.toFloat() / 100f).coerceIn(0f, 1f).toLong()
@@ -655,6 +687,20 @@ fun ExoPlayerView(
             }
 
             var playerView by remember { mutableStateOf<PlayerView?>(null) }
+
+            LaunchedEffect(playerView, contentFrameRate) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return@LaunchedEffect
+                val rate = contentFrameRate?.takeIf { it > 0f } ?: return@LaunchedEffect
+                if (lastAppliedFrameRate == rate) return@LaunchedEffect
+                val applied = FrameRateHelper.requestFrameRate(
+                    surfaceProvider = { playerView?.videoSurfaceView as? SurfaceView },
+                    frameRate = rate
+                )
+                if (applied) {
+                    lastAppliedFrameRate = rate
+                    FrameRateHelper.showFrameRateToast(context, rate)
+                }
+            }
 
             DisposableEffect(playerView) {
                 playerView?.keepScreenOn = true
@@ -875,10 +921,12 @@ fun ExoPlayerView(
                     }
                 },
                 onSeek = { position ->
+                    cancelAutoSkip()
                     isSeeking = true
                     playbackProgress = position
                 },
                 onSeekComplete = { position ->
+                    cancelAutoSkip()
                     exoPlayer.seekTo(position * 1000)
                     isSeeking = false
                     viewModel.savePlaybackPosition(currentMediaItem.id, userId, accessToken, position)
@@ -902,9 +950,11 @@ fun ExoPlayerView(
                 onDismissControls = { showControls = false },
                 onShowControls = { showControls = true },
                 onSkipBackward = {
+                    cancelAutoSkip()
                     exoPlayer.seekTo((exoPlayer.currentPosition - 10_000).coerceAtLeast(0))
                 },
                 onSkipForward = {
+                    cancelAutoSkip()
                     exoPlayer.seekTo(exoPlayer.currentPosition + 10_000)
                 },
                 skipButtonVisible = showOverlaySkipButton,
@@ -1238,17 +1288,23 @@ private fun createRenderersFactory(
     context: Context,
     decoderMode: DecoderMode,
     enableAudioPassthrough: Boolean,
-    preferHdrOverDolbyVision: Boolean,
+    hdrFormatPreference: HdrFormatPreference,
     enableFfmpegAudio: Boolean = true,
     subtitleOffsetProvider: () -> Long
 ): DefaultRenderersFactory {
+    val filteringMode = when (hdrFormatPreference) {
+        HdrFormatPreference.HDR10_PLUS -> FfmpegFilteringMode.KEEP_HDR10_BASE
+        HdrFormatPreference.DOLBY_VISION -> FfmpegFilteringMode.KEEP_DOLBY_VISION
+        else -> FfmpegFilteringMode.AUTO
+    }
     return OffsetRenderersFactory(
         context = context,
         subtitleOffsetProvider = subtitleOffsetProvider,
         enableAudioPassthrough = enableAudioPassthrough,
-        preferHdrOverDolbyVision = preferHdrOverDolbyVision,
+        hdrFormatPreference = hdrFormatPreference,
         enableFfmpegAudio = enableFfmpegAudio
     ).apply {
+        experimentalSetHdrFilteringMode(filteringMode)
         when (decoderMode) {
             DecoderMode.HARDWARE_ONLY -> {
                 setEnableDecoderFallback(false)
@@ -1455,6 +1511,48 @@ private fun String.normalizeLanguageCode(): String {
         .replace('_', '-')
 }
 
+private fun parseDolbyVisionProfile(text: String?): Int? {
+    val value = text ?: return null
+    val match = Regex("""profile\s+(\d+)""", RegexOption.IGNORE_CASE).find(value)
+    return match?.groupValues?.getOrNull(1)?.toIntOrNull()
+}
+
+private fun isDolbyVisionStream(stream: MediaStream): Boolean {
+    val doViTitle = stream.videoDoViTitle
+    if (doViTitle?.contains("dolby", ignoreCase = true) == true) return true
+    val displayTitle = stream.displayTitle
+    if (displayTitle?.contains("dolby", ignoreCase = true) == true) return true
+    val rangeType = stream.videoRangeType
+    return rangeType?.contains("dovi", ignoreCase = true) == true ||
+        rangeType?.contains("dolby", ignoreCase = true) == true
+}
+
+private fun resolveHdrPreferenceForStream(
+    preference: HdrFormatPreference,
+    videoStream: MediaStream?
+): HdrFormatPreference {
+    if (preference != HdrFormatPreference.AUTO || videoStream == null) return preference
+    if (!isDolbyVisionStream(videoStream)) return preference
+
+    val profile = videoStream.dvProfile
+        ?: parseDolbyVisionProfile(videoStream.videoDoViTitle)
+        ?: parseDolbyVisionProfile(videoStream.displayTitle)
+
+    val supportedProfiles = CodecDetector.getDolbyVisionProfiles()
+        .mapNotNull { parseDolbyVisionProfile(it) }
+        .toSet()
+    val supportsDolbyVision = supportedProfiles.isNotEmpty()
+
+    val dvAllowed = when {
+        profile == 7 -> false
+        !supportsDolbyVision -> false
+        profile == null -> true
+        else -> supportedProfiles.contains(profile)
+    }
+
+    return if (dvAllowed) preference else HdrFormatPreference.HDR10_PLUS
+}
+
 private fun ExoPlayer.applyLocalSubtitleSelection(
     targetIndex: Int?,
     subtitleStreams: List<MediaStream>,
@@ -1549,7 +1647,7 @@ private class OffsetRenderersFactory(
     context: Context,
     private val subtitleOffsetProvider: () -> Long,
     private val enableAudioPassthrough: Boolean,
-    private val preferHdrOverDolbyVision: Boolean,
+    private val hdrFormatPreference: HdrFormatPreference,
     private val enableFfmpegAudio: Boolean = true
 ) : DefaultRenderersFactory(context) {
 
@@ -1568,11 +1666,12 @@ private class OffsetRenderersFactory(
         enableFloatOutput: Boolean,
         enableAudioTrackPlaybackParams: Boolean
     ): AudioSink? {
-        if (!enableAudioPassthrough) {
-            return super.buildAudioSink(context, enableFloatOutput, enableAudioTrackPlaybackParams)
+        val audioCapabilities = if (enableAudioPassthrough) {
+            AudioCapabilities.getCapabilities(context)
+        } else {
+            AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES
         }
-
-        val audioCapabilities = AudioCapabilities.getCapabilities(context)
+        // Build without context so AudioCapabilitiesReceiver doesn't override the toggle.
         return DefaultAudioSink.Builder()
             .setAudioCapabilities(audioCapabilities)
             .setEnableFloatOutput(enableFloatOutput)
@@ -1609,7 +1708,7 @@ private class OffsetRenderersFactory(
         allowedVideoJoiningTimeMs: Long,
         renderersList: ArrayList<Renderer>
     ) {
-        val selector = if (preferHdrOverDolbyVision) {
+        val selector = if (hdrFormatPreference == HdrFormatPreference.HDR10_PLUS) {
             FilteringMediaCodecSelector(mediaCodecSelector)
         } else {
             mediaCodecSelector

@@ -24,6 +24,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.hritwik.avoid.domain.model.library.MediaItem
+import com.hritwik.avoid.domain.model.playback.HdrFormatPreference
 import com.hritwik.avoid.domain.model.playback.PlayerType
 import com.hritwik.avoid.utils.extensions.findActivity
 import com.hritwik.avoid.presentation.viewmodel.auth.AuthServerViewModel
@@ -52,7 +53,7 @@ fun VideoPlayerScreen(
     val decoderMode = playbackSettings.decoderMode
     val displayMode = playbackSettings.displayMode
     val audioPassthroughEnabled = playbackSettings.audioPassthroughEnabled
-    val preferHdrOverDolbyVision = playbackSettings.preferHdrOverDolbyVision
+    val hdrFormatPreference = playbackSettings.hdrFormatPreference
     val autoSkipSegments = playbackSettings.autoSkipSegments
     val personalization by userDataViewModel.personalizationSettings.collectAsStateWithLifecycle()
     val gesturesEnabled = personalization.gesturesEnabled
@@ -87,8 +88,9 @@ fun VideoPlayerScreen(
 
     val selectedVideoRangeLabel = playerState.playbackOptions.selectedVideoStream?.videoRangeLabel
     val effectiveVideoRangeLabel =
-        if (preferHdrOverDolbyVision && selectedVideoRangeLabel?.contains("dolby", ignoreCase = true) == true) {
-            "HDR10"
+        if (hdrFormatPreference == HdrFormatPreference.HDR10_PLUS &&
+            selectedVideoRangeLabel?.contains("dolby", ignoreCase = true) == true) {
+            "HDR10+"
         } else {
             selectedVideoRangeLabel
         }
@@ -136,7 +138,7 @@ fun VideoPlayerScreen(
                 serverUrl = serverUrl,
                 autoSkipSegments = autoSkipSegments,
                 audioPassthroughEnabled = audioPassthroughEnabled,
-                preferHdrOverDolbyVision = preferHdrOverDolbyVision,
+                hdrFormatPreference = hdrFormatPreference,
                 gesturesEnabled = gesturesEnabled,
                 onBackClick = onBackClick,
                 decoderMode = decoderMode,

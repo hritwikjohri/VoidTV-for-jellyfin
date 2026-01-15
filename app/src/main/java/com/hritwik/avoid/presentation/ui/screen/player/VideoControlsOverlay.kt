@@ -179,6 +179,9 @@ fun VideoControlsOverlay(
     var hiddenSkipFeedbackDirection by remember { mutableIntStateOf(0) } 
     var hiddenSkipFeedbackVisible by remember { mutableStateOf(false) }
     var hiddenSkipFeedbackTimestamp by remember { mutableLongStateOf(0L) }
+    var hiddenPauseFeedbackVisible by remember { mutableStateOf(false) }
+    var hiddenPauseFeedbackTimestamp by remember { mutableLongStateOf(0L) }
+    var hiddenPauseFeedbackShowPlay by remember { mutableStateOf(false) }
 
     val formattedTitle = remember(mediaTitle, seasonNumber, episodeNumber) {
         val season = seasonNumber?.takeIf { it > 0 }
@@ -228,6 +231,8 @@ fun VideoControlsOverlay(
             lastInteractionTime = System.currentTimeMillis()
             isProgressPreviewVisible = false
             hiddenSkipFeedbackVisible = false
+            hiddenPauseFeedbackVisible = false
+            hiddenPauseFeedbackShowPlay = false
         } else {
             delay(200)
             if (floatingButtonVisible && floatingSkipButtonVisible) {
@@ -268,6 +273,16 @@ fun VideoControlsOverlay(
         }
     }
 
+    LaunchedEffect(hiddenPauseFeedbackTimestamp) {
+        if (hiddenPauseFeedbackTimestamp == 0L) return@LaunchedEffect
+        val currentTimestamp = hiddenPauseFeedbackTimestamp
+        hiddenPauseFeedbackVisible = true
+        delay(1000)
+        if (hiddenPauseFeedbackTimestamp == currentTimestamp) {
+            hiddenPauseFeedbackVisible = false
+        }
+    }
+
     LaunchedEffect(floatingSkipButtonVisible, isVisible) {
         if (floatingSkipButtonVisible) {
             if (!isVisible) {
@@ -302,6 +317,11 @@ fun VideoControlsOverlay(
     fun triggerHiddenSkipFeedback(direction: Int) {
         hiddenSkipFeedbackDirection = direction
         hiddenSkipFeedbackTimestamp = System.currentTimeMillis()
+    }
+
+    fun triggerHiddenPauseFeedback(showPlayIcon: Boolean) {
+        hiddenPauseFeedbackShowPlay = showPlayIcon
+        hiddenPauseFeedbackTimestamp = System.currentTimeMillis()
     }
 
     LaunchedEffect(continuousSeekDirection) {
@@ -577,7 +597,9 @@ fun VideoControlsOverlay(
                                 floatingButtonVisible = false
                                 true
                             } else {
-                                updateInteractionTime()
+                                onPlayPauseClick()
+                                triggerHiddenPauseFeedback(showPlayIcon = !isPlaying)
+                                updateInteractionTime(shouldShowControls = false)
                                 true
                             }
                         }
@@ -1293,6 +1315,36 @@ fun VideoControlsOverlay(
                         text = if (isBackward) "-10s" else "+10s",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = !isVisible && hiddenPauseFeedbackVisible,
+            enter = fadeIn() + scaleIn(initialScale = 0.9f),
+            exit = fadeOut() + scaleOut(targetScale = 0.9f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .padding(calculateRoundedValue(18).sdp)
+                ) {
+                    Icon(
+                        imageVector = if (hiddenPauseFeedbackShowPlay) {
+                            Icons.Default.PlayArrow
+                        } else {
+                            Icons.Default.Pause
+                        },
+                        contentDescription = "Paused",
+                        tint = Color.White,
+                        modifier = Modifier.size(calculateRoundedValue(36).sdp),
                     )
                 }
             }

@@ -39,6 +39,7 @@ import com.hritwik.avoid.presentation.ui.components.common.SettingItem
 import com.hritwik.avoid.presentation.ui.components.common.SettingItemWithSwitch
 import com.hritwik.avoid.presentation.ui.components.dialogs.DeviceInfoDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.DisplayModeSelectionDialog
+import com.hritwik.avoid.presentation.ui.components.dialogs.HdrFormatSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.MpvConfigDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.PlayerSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleSizeDialog
@@ -65,7 +66,7 @@ fun VoidTabContent(
     val autoSkip = playbackSettings.autoSkipSegments
     val externalPlayerEnabled = playbackSettings.externalPlayerEnabled
     val directPlayEnabled = playbackSettings.directPlayEnabled
-    val preferHdrOverDolbyVision = playbackSettings.preferHdrOverDolbyVision
+    val hdrFormatPreference = playbackSettings.hdrFormatPreference
     val mpvConfig by userDataViewModel.mpvConfig.collectAsStateWithLifecycle()
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
 
@@ -204,13 +205,25 @@ fun VoidTabContent(
         }
 
         item {
-            SettingItemWithSwitch(
+            var showHdrDialog by remember { mutableStateOf(false) }
+
+            SettingItem(
                 icon = Icons.Default.HdrOn,
-                title = "Prefer HDR over Dolby Vision",
-                subtitle = "Skip Dolby Vision enhancements when possible for better compatibility",
-                checked = preferHdrOverDolbyVision,
-                onCheckedChange = { userDataViewModel.setPreferHdrOverDolbyVision(it) }
+                title = "HDR Format",
+                subtitle = "Choose whether to use HDR10+ or Dolby Vision",
+                onClick = { showHdrDialog = true },
+                trailingText = hdrFormatPreference.displayName
             )
+
+            if (showHdrDialog) {
+                HdrFormatSelectionDialog(
+                    currentPreference = hdrFormatPreference,
+                    onPreferenceSelected = { preference ->
+                        userDataViewModel.setHdrFormatPreference(preference)
+                    },
+                    onDismiss = { showHdrDialog = false }
+                )
+            }
         }
 
         item {

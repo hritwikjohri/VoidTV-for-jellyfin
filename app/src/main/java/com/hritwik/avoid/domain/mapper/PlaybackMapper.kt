@@ -16,6 +16,10 @@ class PlaybackMapper @Inject constructor() {
 
     
     fun mapMediaStreamDtoToMediaStream(dto: MediaStreamDto): MediaStream {
+        val resolvedFrameRate = dto.frameRate
+            ?: dto.averageFrameRate
+            ?: dto.realFrameRate
+            ?: dto.referenceFrameRate
         return MediaStream(
             index = dto.index,
             type = MediaStreamType.fromName(dto.type),
@@ -31,13 +35,14 @@ class PlaybackMapper @Inject constructor() {
             width = dto.width,
             height = dto.height,
             aspectRatio = dto.aspectRatio,
-            frameRate = dto.frameRate,
+            frameRate = resolvedFrameRate,
             channels = dto.channels,
             sampleRate = dto.sampleRate,
             channelLayout = dto.channelLayout,
             videoRange = dto.videoRange,
             videoRangeType = dto.videoRangeType,
             videoDoViTitle = dto.videoDoViTitle,
+            dvProfile = dto.dvProfile,
             profile = dto.profile,
             bitDepth = dto.bitDepth
         )

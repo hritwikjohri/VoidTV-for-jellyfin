@@ -1,5 +1,6 @@
 package com.hritwik.avoid.data.remote.dto.playback
 
+import com.hritwik.avoid.data.remote.dto.media.MediaStreamDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -145,4 +146,6 @@ data class PlaybackInfoMediaSourceDto(
     val requiredHttpHeaders: Map<String, String?>? = null,
     @SerialName("TranscodingUrl")
     val transcodingUrl: String? = null,
+    @SerialName("MediaStreams")
+    val mediaStreams: List<MediaStreamDto> = emptyList(),
 )

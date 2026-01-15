@@ -17,7 +17,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 25
-        versionName = "Alpha-0.2.8tv"
+        versionName = "Alpha-0.2.8.1tv"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -113,6 +113,11 @@ android {
     }
 }
 
+configurations.configureEach {
+    exclude(group = "androidx.media3", module = "media3-exoplayer")
+    exclude(group = "androidx.media3", module = "media3-extractor")
+}
+
 dependencies {
     
     implementation(libs.androidx.core.ktx)
@@ -159,9 +164,11 @@ dependencies {
     implementation(files("libs/mpv-compose.aar"))
 
     
-    implementation(libs.androidx.media3.exoplayer)
+    implementation(files("libs/lib-exoplayer-release.aar"))
+    implementation(files("libs/lib-extractor-release.aar"))
+    implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
+    implementation(files("libs/lib-exoplayer-hls-release.aar"))
     implementation(libs.androidx.media3.exoplayer.dash)
-    implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.exoplayer.smoothstreaming)
     implementation(libs.androidx.media3.exoplayer.rtsp)
     implementation(libs.androidx.media3.session)
@@ -170,14 +177,10 @@ dependencies {
     implementation(libs.androidx.media3.datasource)
     implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.androidx.media3.decoder)
-    implementation(libs.androidx.media3.extractor)
     implementation(libs.androidx.media3.cast)
     implementation(libs.androidx.media3.effect)
     implementation(libs.androidx.media3.transformer)
     implementation(libs.androidx.media3.test.utils)
-
-    
-    implementation(libs.media3.ffmpeg.decoder)
 
     
     implementation(libs.androidx.room.runtime)

@@ -1739,6 +1739,8 @@ class LibraryRepositoryImpl @Inject constructor(
                 limit = Int.MAX_VALUE,
                 sortBy = "SortName",
                 sortOrder = "Ascending",
+                fields = ApiConstants.FIELDS_BASIC,
+                enableImageTypes = DEFAULT_MEDIA_IMAGE_TYPES,
                 authorization = authHeader
             )
 
@@ -2022,6 +2024,9 @@ class LibraryRepositoryImpl @Inject constructor(
             val mediaSource = response.mediaSources.firstOrNull { it.id == mediaSourceId }
                 ?: response.mediaSources.firstOrNull()
                 ?: throw IllegalStateException("No media source returned by server")
+            val mediaStreams = playbackMapper.mapMediaStreamDtoListToMediaStreamList(
+                mediaSource.mediaStreams
+            )
             val resolvedUrl = resolvePlaybackUrl(
                 serverUrl = serverUrl,
                 itemId = itemId,
@@ -2032,7 +2037,8 @@ class LibraryRepositoryImpl @Inject constructor(
             )
             PlaybackStreamInfo(
                 url = resolvedUrl,
-                playSessionId = response.playSessionId
+                playSessionId = response.playSessionId,
+                mediaStreams = mediaStreams
             )
         }
     }
@@ -2124,9 +2130,13 @@ class LibraryRepositoryImpl @Inject constructor(
             if (!transcodingUrl.contains("m3u8", ignoreCase = true)) {
                 throw IllegalStateException("Transcoding URL is not HLS (missing m3u8)")
             }
+            val mediaStreams = playbackMapper.mapMediaStreamDtoListToMediaStreamList(
+                mediaSource.mediaStreams
+            )
             PlaybackStreamInfo(
                 url = ensureApiKey(mergeServerUrl(serverUrl, transcodingUrl), accessToken),
                 playSessionId = response.playSessionId,
+                mediaStreams = mediaStreams
             )
         }
     }
@@ -2314,6 +2324,9 @@ class LibraryRepositoryImpl @Inject constructor(
             val mediaSource = response.mediaSources.firstOrNull { it.id == mediaSourceId }
                 ?: response.mediaSources.firstOrNull()
                 ?: throw IllegalStateException("No media source returned by server")
+            val mediaStreams = playbackMapper.mapMediaStreamDtoListToMediaStreamList(
+                mediaSource.mediaStreams
+            )
 
             val resolvedUrl = if (useDirectPlayStrategy) {
                 
@@ -2346,7 +2359,8 @@ class LibraryRepositoryImpl @Inject constructor(
             Log.i(TAG, "Playback URL resolved successfully | Strategy: $strategyName | Session: ${response.playSessionId}")
             PlaybackStreamInfo(
                 url = resolvedUrl,
-                playSessionId = response.playSessionId
+                playSessionId = response.playSessionId,
+                mediaStreams = mediaStreams
             )
         }
     }

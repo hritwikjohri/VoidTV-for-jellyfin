@@ -11,6 +11,7 @@ import com.hritwik.avoid.data.local.PreferencesManager
 import com.hritwik.avoid.domain.model.library.MediaItem
 import com.hritwik.avoid.domain.model.playback.DecoderMode
 import com.hritwik.avoid.domain.model.playback.DisplayMode
+import com.hritwik.avoid.domain.model.playback.HdrFormatPreference
 import com.hritwik.avoid.domain.model.playback.PlayerType
 import com.hritwik.avoid.domain.repository.LibraryRepository
 import com.hritwik.avoid.presentation.viewmodel.BaseViewModel
@@ -68,7 +69,7 @@ class UserDataViewModel @Inject constructor(
         val externalPlayerEnabled: Boolean,
         val playerType: PlayerType,
         val directPlayEnabled: Boolean,
-        val preferHdrOverDolbyVision: Boolean
+        val hdrFormatPreference: HdrFormatPreference
     )
 
     private data class PlaybackSettingsBundle(
@@ -81,7 +82,7 @@ class UserDataViewModel @Inject constructor(
         val autoSkipSegments: Boolean,
         val externalPlayerEnabled: Boolean = PreferenceConstants.DEFAULT_EXTERNAL_PLAYER_ENABLED,
         val directPlayEnabled: Boolean = PreferenceConstants.DEFAULT_DIRECT_PLAY_ENABLED,
-        val preferHdrOverDolbyVision: Boolean = PreferenceConstants.DEFAULT_PREFER_HDR_OVER_DV,
+        val hdrFormatPreference: HdrFormatPreference = HdrFormatPreference.AUTO,
     )
 
     init {
@@ -107,7 +108,9 @@ class UserDataViewModel @Inject constructor(
                 audioPassthroughEnabled = PreferenceConstants.DEFAULT_AUDIO_PASSTHROUGH_ENABLED,
                 autoSkipSegments = PreferenceConstants.DEFAULT_AUTO_SKIP_SEGMENTS,
                 directPlayEnabled = PreferenceConstants.DEFAULT_DIRECT_PLAY_ENABLED,
-                preferHdrOverDolbyVision = PreferenceConstants.DEFAULT_PREFER_HDR_OVER_DV
+                hdrFormatPreference = HdrFormatPreference.fromValue(
+                    PreferenceConstants.DEFAULT_HDR_FORMAT_PREFERENCE
+                )
             )
         }
             .combine(preferencesManager.getAudioPassthroughEnabled()) { bundle, passthrough ->
@@ -120,7 +123,14 @@ class UserDataViewModel @Inject constructor(
                 bundle.copy(externalPlayerEnabled = externalPlayer)
             }
             .combine(preferencesManager.getPreferHdrOverDolbyVision()) { bundle, preferHdr ->
-                bundle.copy(preferHdrOverDolbyVision = preferHdr)
+                if (bundle.hdrFormatPreference == HdrFormatPreference.AUTO && preferHdr) {
+                    bundle.copy(hdrFormatPreference = HdrFormatPreference.HDR10_PLUS)
+                } else {
+                    bundle
+                }
+            }
+            .combine(preferencesManager.getHdrFormatPreference()) { bundle, hdrPreference ->
+                bundle.copy(hdrFormatPreference = hdrPreference)
             }
             .combine(preferencesManager.getPlayerType()) { bundle, player ->
                 bundle.copy(externalPlayerEnabled = bundle.externalPlayerEnabled)
@@ -135,7 +145,7 @@ class UserDataViewModel @Inject constructor(
                     externalPlayerEnabled = bundle.externalPlayerEnabled,
                     playerType = player,
                     directPlayEnabled = bundle.directPlayEnabled,
-                    preferHdrOverDolbyVision = bundle.preferHdrOverDolbyVision
+                    hdrFormatPreference = bundle.hdrFormatPreference
                 )
             }
             .combine(preferencesManager.getDirectPlayEnabled()) { settings, directPlay ->
@@ -155,7 +165,7 @@ class UserDataViewModel @Inject constructor(
                     PreferenceConstants.DEFAULT_EXTERNAL_PLAYER_ENABLED,
                     PlayerType.fromValue(PreferenceConstants.DEFAULT_PLAYER_TYPE),
                     PreferenceConstants.DEFAULT_DIRECT_PLAY_ENABLED,
-                    PreferenceConstants.DEFAULT_PREFER_HDR_OVER_DV
+                    HdrFormatPreference.fromValue(PreferenceConstants.DEFAULT_HDR_FORMAT_PREFERENCE)
                 )
             )
 
@@ -239,6 +249,10 @@ class UserDataViewModel @Inject constructor(
 
     fun setPreferHdrOverDolbyVision(enabled: Boolean) {
         viewModelScope.launch { preferencesManager.savePreferHdrOverDolbyVision(enabled) }
+    }
+
+    fun setHdrFormatPreference(preference: HdrFormatPreference) {
+        viewModelScope.launch { preferencesManager.saveHdrFormatPreference(preference) }
     }
 
     fun setSubtitleSize(size: String) {

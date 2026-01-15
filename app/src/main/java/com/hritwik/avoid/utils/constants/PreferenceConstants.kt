@@ -71,6 +71,7 @@ object PreferenceConstants {
     const val KEY_AUDIO_PASSTHROUGH_ENABLED = "audio_passthrough_enabled"
     const val KEY_DIRECT_PLAY_ENABLED = "direct_play_enabled"
     const val KEY_PREFER_HDR_OVER_DV = "prefer_hdr_over_dolby_vision"
+    const val KEY_HDR_FORMAT_PREFERENCE = "hdr_format_preference"
 
     const val KEY_LIBRARY_VIEW_TYPE = "library_view_type"
     const val KEY_LIBRARY_SORT_ORDER = "library_sort_order"
@@ -138,6 +139,7 @@ object PreferenceConstants {
     const val DEFAULT_AUDIO_PASSTHROUGH_ENABLED = false
     const val DEFAULT_DIRECT_PLAY_ENABLED = false
     const val DEFAULT_PREFER_HDR_OVER_DV = false
+    const val DEFAULT_HDR_FORMAT_PREFERENCE = "auto"
     const val DEFAULT_SERVER_LEGACY_PLAYBACK = false
     const val DEFAULT_REMEMBER_ACCOUNT = true
 

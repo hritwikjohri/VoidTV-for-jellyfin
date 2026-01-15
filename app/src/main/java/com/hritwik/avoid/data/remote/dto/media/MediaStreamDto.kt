@@ -35,6 +35,12 @@ data class MediaStreamDto(
     val aspectRatio: String? = null,
     @SerialName("FrameRate")
     val frameRate: Float? = null,
+    @SerialName("AverageFrameRate")
+    val averageFrameRate: Float? = null,
+    @SerialName("RealFrameRate")
+    val realFrameRate: Float? = null,
+    @SerialName("ReferenceFrameRate")
+    val referenceFrameRate: Float? = null,
     @SerialName("Channels")
     val channels: Int? = null,
     @SerialName("SampleRate")
@@ -47,6 +53,8 @@ data class MediaStreamDto(
     val videoRangeType: String? = null,
     @SerialName("VideoDoViTitle")
     val videoDoViTitle: String? = null,
+    @SerialName("DvProfile")
+    val dvProfile: Int? = null,
     @SerialName("Profile")
     val profile: String? = null,
     @SerialName("BitDepth")

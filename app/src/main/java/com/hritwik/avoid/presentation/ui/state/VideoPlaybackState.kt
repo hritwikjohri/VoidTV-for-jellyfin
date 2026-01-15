@@ -8,6 +8,7 @@ import com.hritwik.avoid.domain.model.library.MediaItem
 import com.hritwik.avoid.domain.model.media.MediaSource
 import com.hritwik.avoid.domain.model.media.MediaStream
 import com.hritwik.avoid.domain.model.media.PlaybackOptions
+import com.hritwik.avoid.domain.model.playback.HdrFormatPreference
 import com.hritwik.avoid.domain.model.playback.Segment
 import com.hritwik.avoid.domain.model.media.VideoQuality
 import com.hritwik.avoid.domain.model.playback.PlaybackTranscodeOption
@@ -60,7 +61,7 @@ data class VideoPlaybackState(
     val hasEnded: Boolean = false,
     val showEndScreen: Boolean = false,
     val onDeckItems: List<MediaItem> = emptyList(),
-    val preferHdrOverDolbyVision: Boolean = false,
+    val hdrFormatPreference: HdrFormatPreference = HdrFormatPreference.AUTO,
 ) {
     val hasMultipleVersions: Boolean
         get() = availableVersions.size > 1
@@ -97,11 +98,11 @@ data class VideoPlaybackState(
     val currentVideoRangeText: String
         get() {
             val label = playbackOptions.selectedVideoStream?.videoRangeLabel ?: "SDR"
-            return if (preferHdrOverDolbyVision && label.contains("dolby", ignoreCase = true)) {
-                "HDR10"
-            } else {
-                label
+            if (hdrFormatPreference == HdrFormatPreference.HDR10_PLUS &&
+                label.contains("dolby", ignoreCase = true)) {
+                return "HDR10+"
             }
+            return label
         }
 
     val currentAudioText: String

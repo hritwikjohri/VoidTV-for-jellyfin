@@ -213,7 +213,15 @@ fun MediaDetailContent(
         )
     }
 
-    val logoUrl = mediaItem.getLogoUrl(serverUrl)
+    val showLogoUrl = mediaItem.getLogoUrl(serverUrl)
+    val logoUrl = if (mediaType == MediaType.SHOW) {
+        val seasonLogoUrl = displaySeasons
+            .firstOrNull { it.id == selectedSeasonId && it.id != extrasSeasonId }
+            ?.getLogoUrl(serverUrl)
+        seasonLogoUrl ?: showLogoUrl
+    } else {
+        showLogoUrl
+    }
     val seasonFocusRequesters = remember(displaySeasons) { List(displaySeasons.size) { FocusRequester() } }
     val activeEpisodes = remember(selectedSeasonId, extrasSeasonId, extrasList, episodes) {
         if (selectedSeasonId == extrasSeasonId) extrasList else episodes

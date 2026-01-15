@@ -13,6 +13,7 @@ import com.hritwik.avoid.domain.model.media.MediaSource
 import com.hritwik.avoid.domain.model.media.MediaStream
 import com.hritwik.avoid.domain.model.media.PlaybackOptions
 import com.hritwik.avoid.domain.model.media.VideoQuality
+import com.hritwik.avoid.domain.model.playback.HdrFormatPreference
 import com.hritwik.avoid.domain.model.playback.PlaybackStreamInfo
 import com.hritwik.avoid.domain.model.playback.PlaybackTranscodeOption
 import com.hritwik.avoid.domain.repository.LibraryRepository
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jellyfin.sdk.model.api.MediaStreamType
 import javax.inject.Inject
 
 @UnstableApi
@@ -72,10 +74,175 @@ class VideoPlaybackViewModel @Inject constructor(
         return mtlsProxyServer.proxiedUrlFor(url) ?: url
     }
 
+    private data class ResolvedStreamSelection(
+        val audioStreams: List<MediaStream>,
+        val subtitleStreams: List<MediaStream>,
+        val selectedAudio: MediaStream?,
+        val selectedSubtitle: MediaStream?,
+        val selectedVideo: MediaStream?
+    )
+
+    private fun parseDolbyVisionProfile(value: String?): Int? {
+        val text = value ?: return null
+        val match = Regex("""profile\s+(\d+)""", RegexOption.IGNORE_CASE).find(text)
+        return match?.groupValues?.getOrNull(1)?.toIntOrNull()
+    }
+
+    private fun getDolbyVisionProfile(stream: MediaStream): Int? {
+        return stream.dvProfile
+            ?: parseDolbyVisionProfile(stream.videoDoViTitle)
+            ?: parseDolbyVisionProfile(stream.displayTitle)
+    }
+
+    private fun isDolbyVisionStream(stream: MediaStream): Boolean {
+        val doViTitle = stream.videoDoViTitle
+        if (doViTitle?.contains("dolby", ignoreCase = true) == true) return true
+        val displayTitle = stream.displayTitle
+        if (displayTitle?.contains("dolby", ignoreCase = true) == true) return true
+        val rangeType = stream.videoRangeType
+        return rangeType?.contains("dovi", ignoreCase = true) == true ||
+            rangeType?.contains("dolby", ignoreCase = true) == true
+    }
+
+    private fun isHdrStream(stream: MediaStream): Boolean {
+        return stream.videoRangeType?.contains("HDR", ignoreCase = true) == true ||
+            stream.videoRange?.contains("HDR", ignoreCase = true) == true
+    }
+
+    private fun getSupportedDolbyVisionProfiles(): Set<Int> {
+        return CodecDetector.getDolbyVisionProfiles()
+            .mapNotNull { parseDolbyVisionProfile(it) }
+            .toSet()
+    }
+
+    private fun pickBestStream(streams: List<MediaStream>): MediaStream? {
+        return streams.firstOrNull { it.isDefault }
+            ?: streams.maxByOrNull { it.height ?: 0 }
+            ?: streams.firstOrNull()
+    }
+
+    private fun pickBestHdrStream(streams: List<MediaStream>): MediaStream? {
+        val hdrStreams = streams.filter { isHdrStream(it) }
+        val candidates = if (hdrStreams.isNotEmpty()) hdrStreams else streams
+        return candidates.maxByOrNull { it.height ?: 0 } ?: candidates.firstOrNull()
+    }
+
+    private fun selectVideoStream(
+        videoStreams: List<MediaStream>,
+        preferredQuality: VideoQuality?,
+        hdrPreference: HdrFormatPreference,
+        fallback: MediaStream?
+    ): MediaStream? {
+        val qualityCandidates = preferredQuality?.let { q ->
+            videoStreams.filter { it.videoQuality == q }
+        }.orEmpty()
+        val candidates = if (qualityCandidates.isNotEmpty()) qualityCandidates else videoStreams
+        if (candidates.isEmpty()) return fallback
+
+        if (hdrPreference != HdrFormatPreference.AUTO) {
+            return pickBestStream(candidates) ?: fallback
+        }
+
+        val supportedDvProfiles = getSupportedDolbyVisionProfiles()
+        val supportsDolbyVision = supportedDvProfiles.isNotEmpty()
+
+        fun isDvAllowed(stream: MediaStream): Boolean {
+            val profile = getDolbyVisionProfile(stream)
+            if (profile == 7) return false
+            if (!supportsDolbyVision) return false
+            return profile == null || supportedDvProfiles.contains(profile)
+        }
+
+        val dvStreams = candidates.filter { isDolbyVisionStream(it) }
+        val nonDvStreams = candidates.filterNot { isDolbyVisionStream(it) }
+        val hdrCandidate = pickBestHdrStream(nonDvStreams)
+
+        if (dvStreams.isEmpty()) {
+            return pickBestStream(candidates) ?: fallback
+        }
+
+        val allowedDvStreams = dvStreams.filter { isDvAllowed(it) }
+        if (allowedDvStreams.isNotEmpty()) {
+            return pickBestStream(allowedDvStreams) ?: hdrCandidate ?: fallback
+        }
+
+        val hdrFallback = hdrCandidate
+            ?: pickBestHdrStream(videoStreams.filterNot { isDolbyVisionStream(it) })
+        return hdrFallback ?: pickBestStream(candidates) ?: fallback
+    }
+
+    private fun resolveStreamsFromPlaybackInfo(
+        playbackStreams: List<MediaStream>,
+        fallbackAudioStreams: List<MediaStream>,
+        fallbackSubtitleStreams: List<MediaStream>,
+        fallbackVideoStream: MediaStream?,
+        audioIndex: Int?,
+        subtitleIndex: Int?
+    ): ResolvedStreamSelection {
+        if (playbackStreams.isEmpty()) {
+            return ResolvedStreamSelection(
+                audioStreams = fallbackAudioStreams,
+                subtitleStreams = fallbackSubtitleStreams,
+                selectedAudio = audioIndex?.let { idx ->
+                    fallbackAudioStreams.firstOrNull { it.index == idx }
+                },
+                selectedSubtitle = subtitleIndex?.let { idx ->
+                    fallbackSubtitleStreams.firstOrNull { it.index == idx }
+                },
+                selectedVideo = fallbackVideoStream
+            )
+        }
+
+        val audioStreams = playbackStreams.filter { it.type == MediaStreamType.AUDIO }
+        val subtitleStreams = playbackStreams.filter { it.type == MediaStreamType.SUBTITLE }
+        val videoStreams = playbackStreams.filter { it.type == MediaStreamType.VIDEO }
+
+        val selectedAudio = audioIndex?.let { idx ->
+            audioStreams.firstOrNull { it.index == idx }
+        } ?: audioStreams.firstOrNull { it.isDefault } ?: audioStreams.firstOrNull()
+
+        val selectedSubtitle = subtitleIndex?.let { idx ->
+            subtitleStreams.firstOrNull { it.index == idx }
+        } ?: subtitleStreams.firstOrNull { it.isDefault }
+
+        val selectedVideo = selectVideoStream(
+            videoStreams = videoStreams,
+            preferredQuality = _state.value.preferredVideoQuality,
+            hdrPreference = _state.value.hdrFormatPreference,
+            fallback = fallbackVideoStream
+        )
+
+        val resolvedAudioStreams = if (audioStreams.isNotEmpty()) audioStreams else fallbackAudioStreams
+        val resolvedSubtitleStreams = if (subtitleStreams.isNotEmpty()) subtitleStreams else fallbackSubtitleStreams
+
+        val resolvedSelectedAudio = if (audioStreams.isNotEmpty()) {
+            selectedAudio
+        } else {
+            audioIndex?.let { idx -> fallbackAudioStreams.firstOrNull { it.index == idx } }
+                ?: fallbackAudioStreams.firstOrNull { it.isDefault }
+                ?: fallbackAudioStreams.firstOrNull()
+        }
+
+        val resolvedSelectedSubtitle = if (subtitleStreams.isNotEmpty()) {
+            selectedSubtitle
+        } else {
+            subtitleIndex?.let { idx -> fallbackSubtitleStreams.firstOrNull { it.index == idx } }
+                ?: fallbackSubtitleStreams.firstOrNull { it.isDefault }
+        }
+
+        return ResolvedStreamSelection(
+            audioStreams = resolvedAudioStreams,
+            subtitleStreams = resolvedSubtitleStreams,
+            selectedAudio = resolvedSelectedAudio,
+            selectedSubtitle = resolvedSelectedSubtitle,
+            selectedVideo = selectedVideo ?: fallbackVideoStream
+        )
+    }
+
     init {
         viewModelScope.launch {
-            preferencesManager.getPreferHdrOverDolbyVision().collectLatest { preferHdr ->
-                _state.update { it.copy(preferHdrOverDolbyVision = preferHdr) }
+            preferencesManager.getHdrFormatPreference().collectLatest { preference ->
+                _state.update { it.copy(hdrFormatPreference = preference) }
             }
         }
     }
@@ -136,11 +303,15 @@ class VideoPlaybackViewModel @Inject constructor(
 
         val subtitleStreams = selectedMediaSource?.subtitleStreams ?: emptyList()
 
-        val selectedVideoStream = savedPrefs?.videoQuality?.let { qualityStr ->
-            runCatching { VideoQuality.valueOf(qualityStr) }.getOrNull()?.let { q ->
-                selectedMediaSource?.videoStreams?.firstOrNull { it.videoQuality == q }
-            }
-        } ?: selectedMediaSource?.defaultVideoStream
+        val preferredQuality = savedPrefs?.videoQuality?.let { qualityStr ->
+            runCatching { VideoQuality.valueOf(qualityStr) }.getOrNull()
+        }
+        val selectedVideoStream = selectVideoStream(
+            videoStreams = selectedMediaSource?.videoStreams.orEmpty(),
+            preferredQuality = preferredQuality,
+            hdrPreference = _state.value.hdrFormatPreference,
+            fallback = selectedMediaSource?.defaultVideoStream
+        )
 
         val selectedAudioStream = savedPrefs?.audioIndex?.let { idx ->
             selectedMediaSource?.audioStreams?.firstOrNull { it.index == idx }
@@ -173,6 +344,7 @@ class VideoPlaybackViewModel @Inject constructor(
             availableSubtitleStreams = subtitleStreams,
             preferredAudioLanguage = preferredAudioLanguage,
             preferredSubtitleLanguage = preferredSubtitleLanguage,
+            preferredVideoQuality = preferredQuality,
             playbackTranscodeOption = savedTranscodeOption,
             transcodingSessionId = null,
             subtitleOffsetMs = savedSubtitleOffsetMs
@@ -239,7 +411,12 @@ class VideoPlaybackViewModel @Inject constructor(
             val availableVideoQualities = updatedSource.availableVideoQualities
             val updatedOptions = _state.value.playbackOptions.copy(
                 selectedMediaSource = updatedSource,
-                selectedVideoStream = updatedSource.defaultVideoStream,
+                selectedVideoStream = selectVideoStream(
+                    videoStreams = updatedSource.videoStreams,
+                    preferredQuality = _state.value.preferredVideoQuality,
+                    hdrPreference = _state.value.hdrFormatPreference,
+                    fallback = updatedSource.defaultVideoStream
+                ),
                 selectedAudioStream = updatedSource.defaultAudioStream,
                 selectedSubtitleStream = updatedSource.defaultSubtitleStream
             )
@@ -273,7 +450,8 @@ class VideoPlaybackViewModel @Inject constructor(
 
             _state.value = _state.value.copy(
                 playbackOptions = updatedOptions,
-                showVideoQualityDialog = false
+                showVideoQualityDialog = false,
+                preferredVideoQuality = quality
             )
         }
         persistPlaybackPreferences()
@@ -294,11 +472,13 @@ class VideoPlaybackViewModel @Inject constructor(
         
         val selectedSource = _state.value.playbackOptions.selectedMediaSource
             ?: mediaItem.mediaSources.firstOrNull { it.id == mediaSourceId }
-        val videoCodec = selectedSource?.defaultVideoStream?.codec
-        val videoRange = selectedSource?.defaultVideoStream?.videoRange
-        val videoRangeType = selectedSource?.defaultVideoStream?.videoRangeType
-        val profile = selectedSource?.defaultVideoStream?.profile
-        val bitDepth = selectedSource?.defaultVideoStream?.bitDepth
+        val selectedVideoStream = _state.value.playbackOptions.selectedVideoStream
+            ?: selectedSource?.defaultVideoStream
+        val videoCodec = selectedVideoStream?.codec
+        val videoRange = selectedVideoStream?.videoRange
+        val videoRangeType = selectedVideoStream?.videoRangeType
+        val profile = selectedVideoStream?.profile
+        val bitDepth = selectedVideoStream?.bitDepth
 
         activeTranscodeJob?.cancel()
         activeTranscodeJob = viewModelScope.launch {
@@ -485,11 +665,15 @@ class VideoPlaybackViewModel @Inject constructor(
                 }
 
                 
-                val selectedVideoStream = savedPrefs?.videoQuality?.let { qualityStr ->
-                    runCatching { VideoQuality.valueOf(qualityStr) }.getOrNull()?.let { q ->
-                        selectedSource?.videoStreams?.firstOrNull { it.videoQuality == q }
-                    }
-                } ?: selectedSource?.defaultVideoStream
+                val preferredQuality = savedPrefs?.videoQuality?.let { qualityStr ->
+                    runCatching { VideoQuality.valueOf(qualityStr) }.getOrNull()
+                }
+                val selectedVideoStream = selectVideoStream(
+                    videoStreams = selectedSource?.videoStreams.orEmpty(),
+                    preferredQuality = preferredQuality,
+                    hdrPreference = _state.value.hdrFormatPreference,
+                    fallback = selectedSource?.defaultVideoStream
+                )
 
 
                 if (!isOffline) {
@@ -535,11 +719,12 @@ class VideoPlaybackViewModel @Inject constructor(
                     ?: mediaItem.id
 
                 
-                val videoCodec = selectedSource?.defaultVideoStream?.codec
-                val videoRange = selectedSource?.defaultVideoStream?.videoRange
-                val videoRangeType = selectedSource?.defaultVideoStream?.videoRangeType
-                val profile = selectedSource?.defaultVideoStream?.profile
-                val bitDepth = selectedSource?.defaultVideoStream?.bitDepth
+                val streamForParams = selectedVideoStream ?: selectedSource?.defaultVideoStream
+                val videoCodec = streamForParams?.codec
+                val videoRange = streamForParams?.videoRange
+                val videoRangeType = streamForParams?.videoRangeType
+                val profile = streamForParams?.profile
+                val bitDepth = streamForParams?.bitDepth
 
                 val streamResult = fetchStreamInfo(
                     mediaItem = mediaItem,
@@ -573,6 +758,14 @@ class VideoPlaybackViewModel @Inject constructor(
                 val streamInfo = (streamResult as? NetworkResult.Success)?.data
                     ?: return@launch
                 val resolvedUrl = proxiedUrl(streamInfo.url, accessToken)
+                val resolvedStreams = resolveStreamsFromPlaybackInfo(
+                    playbackStreams = streamInfo.mediaStreams,
+                    fallbackAudioStreams = availableAudioStreams,
+                    fallbackSubtitleStreams = availableSubtitleStreams,
+                    fallbackVideoStream = selectedVideoStream,
+                    audioIndex = currentAudioStreamIndex,
+                    subtitleIndex = currentSubtitleStreamIndex
+                )
 
                 val nextUpdateCount = _state.value.startPositionUpdateCount + 1
 
@@ -588,13 +781,14 @@ class VideoPlaybackViewModel @Inject constructor(
                     startPositionMs = resolvedStartMs,
                     startPositionUpdateCount = nextUpdateCount,
                     isInitialized = true,
-                    availableAudioStreams = availableAudioStreams,
-                    availableSubtitleStreams = availableSubtitleStreams,
+                    availableAudioStreams = resolvedStreams.audioStreams,
+                    availableSubtitleStreams = resolvedStreams.subtitleStreams,
+                    preferredVideoQuality = preferredQuality,
                     playbackOptions = _state.value.playbackOptions.copy(
                         selectedMediaSource = selectedSource,
-                        selectedVideoStream = selectedVideoStream,
-                        selectedAudioStream = selectedAudioStream,
-                        selectedSubtitleStream = selectedSubtitleStream
+                        selectedVideoStream = resolvedStreams.selectedVideo,
+                        selectedAudioStream = resolvedStreams.selectedAudio ?: selectedAudioStream,
+                        selectedSubtitleStream = resolvedStreams.selectedSubtitle ?: selectedSubtitleStream
                     ),
                     isTranscoding = !transcodeOption.isOriginal
                 )
@@ -1064,11 +1258,13 @@ class VideoPlaybackViewModel @Inject constructor(
         
         val selectedSource = _state.value.playbackOptions.selectedMediaSource
             ?: mediaItem.mediaSources.firstOrNull { it.id == mediaSourceId }
-        val videoCodec = selectedSource?.defaultVideoStream?.codec
-        val videoRange = selectedSource?.defaultVideoStream?.videoRange
-        val videoRangeType = selectedSource?.defaultVideoStream?.videoRangeType
-        val profile = selectedSource?.defaultVideoStream?.profile
-        val bitDepth = selectedSource?.defaultVideoStream?.bitDepth
+        val selectedVideoStream = _state.value.playbackOptions.selectedVideoStream
+            ?: selectedSource?.defaultVideoStream
+        val videoCodec = selectedVideoStream?.codec
+        val videoRange = selectedVideoStream?.videoRange
+        val videoRangeType = selectedVideoStream?.videoRangeType
+        val profile = selectedVideoStream?.profile
+        val bitDepth = selectedVideoStream?.bitDepth
 
         activeTranscodeJob?.cancel()
         activeTranscodeJob = viewModelScope.launch {
@@ -1096,6 +1292,14 @@ class VideoPlaybackViewModel @Inject constructor(
                 is NetworkResult.Success -> {
                     val streamInfo = result.data
                     val resolvedUrl = proxiedUrl(streamInfo.url, accessToken)
+                    val resolvedStreams = resolveStreamsFromPlaybackInfo(
+                        playbackStreams = streamInfo.mediaStreams,
+                        fallbackAudioStreams = _state.value.availableAudioStreams,
+                        fallbackSubtitleStreams = _state.value.availableSubtitleStreams,
+                        fallbackVideoStream = _state.value.playbackOptions.selectedVideoStream,
+                        audioIndex = audioIndex,
+                        subtitleIndex = subtitleIndex
+                    )
                     val shouldUpdateStart = startPositionMs != null
                     val nextUpdateCount = if (shouldUpdateStart) {
                         _state.value.startPositionUpdateCount + 1
@@ -1112,7 +1316,17 @@ class VideoPlaybackViewModel @Inject constructor(
                         exoMediaItem = null,
                         cacheDataSourceFactory = null,
                         startPositionMs = startPositionMs ?: _state.value.startPositionMs,
-                        startPositionUpdateCount = nextUpdateCount
+                        startPositionUpdateCount = nextUpdateCount,
+                        availableAudioStreams = resolvedStreams.audioStreams,
+                        availableSubtitleStreams = resolvedStreams.subtitleStreams,
+                        playbackOptions = _state.value.playbackOptions.copy(
+                            selectedVideoStream = resolvedStreams.selectedVideo
+                                ?: _state.value.playbackOptions.selectedVideoStream,
+                            selectedAudioStream = resolvedStreams.selectedAudio
+                                ?: _state.value.playbackOptions.selectedAudioStream,
+                            selectedSubtitleStream = resolvedStreams.selectedSubtitle
+                                ?: _state.value.playbackOptions.selectedSubtitleStream
+                        )
                     )
                 }
                 is NetworkResult.Error -> {
