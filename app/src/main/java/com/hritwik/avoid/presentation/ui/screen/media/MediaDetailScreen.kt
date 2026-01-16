@@ -20,6 +20,7 @@ import com.hritwik.avoid.presentation.viewmodel.auth.AuthServerViewModel
 import com.hritwik.avoid.presentation.viewmodel.media.MediaViewModel
 import com.hritwik.avoid.presentation.viewmodel.player.VideoPlaybackViewModel
 import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun MediaDetailScreen(
@@ -144,6 +145,20 @@ fun MediaDetailScreen(
                 }
             }
 
+            var pendingEpisode by remember { mutableStateOf<MediaItem?>(null) }
+            LaunchedEffect(pendingEpisode?.id, authState.authSession) {
+                val episode = pendingEpisode ?: return@LaunchedEffect
+                delay(200)
+                if (pendingEpisode?.id != episode.id) return@LaunchedEffect
+                authState.authSession?.let { session ->
+                    videoPlaybackViewModel.initializeVideoOptions(
+                        mediaItem = episode,
+                        userId = session.userId.id,
+                        accessToken = session.accessToken
+                    )
+                }
+            }
+
             MediaDetailContent(
                 mediaType = type,
                 mediaItem = item,
@@ -161,13 +176,7 @@ fun MediaDetailScreen(
                 onEpisodeClick = onEpisodeClick,
                 onEpisodeFocused = { episode ->
                     focusedEpisode = episode
-                    authState.authSession?.let { session ->
-                        videoPlaybackViewModel.initializeVideoOptions(
-                            mediaItem = episode,
-                            userId = session.userId.id,
-                            accessToken = session.accessToken
-                        )
-                    }
+                    pendingEpisode = episode
                 },
                 onSpecialFeatureFocused = { _ -> },
                 onEpisodeUnfocused = { episode ->
@@ -190,4 +199,3 @@ fun MediaDetailScreen(
         }
     }
 }
-

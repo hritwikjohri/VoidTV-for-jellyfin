@@ -45,7 +45,8 @@ data class MediaItem(
     val seasonPrimaryImageTag: String? = null,
     val parentIndexNumber: Int? = null,
     val indexNumber: Int? = null,
-    val tvdbId: String? = null
+    val tvdbId: String? = null,
+    val imageBlurHashes: Map<String, Map<String, String>>? = null
 ) : Parcelable {
     fun getLogoUrl(serverUrl: String): String? {
         val tag = logoImageTag ?: return null
@@ -53,6 +54,11 @@ data class MediaItem(
         if (file.isAbsolute) return file.toURI().toString()
         val baseUrl = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
         return "${baseUrl}Items/$id/Images/Logo?tag=$tag&quality=${ApiConstants.DEFAULT_IMAGE_QUALITY}&maxWidth=${ApiConstants.POSTER_MAX_WIDTH}"
+    }
+
+    fun getBlurHash(imageType: String, imageTag: String?): String? {
+        if (imageTag == null) return null
+        return imageBlurHashes?.get(imageType)?.get(imageTag)
     }
 
     fun getPrimaryTagline(): String? {

@@ -83,7 +83,7 @@ class VoidApplication : Application() {
             .diskCache {
                 DiskCache.Builder()
                     .directory(File(cacheDir, "coil_image_cache"))
-                    .maxSizePercent(0.02)
+                    .maxSizePercent(0.08)
                     .build()
             }
             .build()

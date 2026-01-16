@@ -1,6 +1,7 @@
 package com.hritwik.avoid.presentation.ui.components.common
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,16 +14,16 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Size as CoilSize
-import jp.wasabeef.transformers.coil.BlurTransformation
+import com.wolt.blurhashkt.BlurHashDecoder
 
 @Composable
 fun HeroBackground(
@@ -30,6 +31,9 @@ fun HeroBackground(
     modifier: Modifier = Modifier,
     featherHeight: Dp = 64.dp,
     featherWidth: Dp = 64.dp,
+    placeholderUrl: String? = null,
+    blurHash: String? = null,
+    onImageLoaded: ((String) -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     Box(Modifier.fillMaxSize().then(modifier)) {
@@ -39,49 +43,40 @@ fun HeroBackground(
 
         if (imageUrl != null) {
             val context = LocalContext.current
+            val unblurredCacheKey = "hero_full:$imageUrl"
+            val unblurredPlaceholderKey = placeholderUrl?.let { "hero_full:$it" }
 
-            
-            val blurredImageRequest = remember(imageUrl) {
-                ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .crossfade(150) 
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .size(128)
-                    .transformations(
-                        BlurTransformation(
-                            context = context,
-                            radius = 25,  
-                            sampling = 4  
-                        )
-                    )
-                    .build()
+            val blurBitmap = remember(blurHash) {
+                blurHash?.let {
+                    runCatching { BlurHashDecoder.decode(it, 32, 32, 1f, true) }.getOrNull()
+                }
+            }
+            if (blurBitmap != null) {
+                Image(
+                    bitmap = blurBitmap.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
             }
 
-            AsyncImage(
-                model = blurredImageRequest,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.matchParentSize(),
-            )
-
-            Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.35f)))
+            Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.325f)))
 
             Canvas(Modifier.matchParentSize()) {
                 drawRect(
                     brush = Brush.horizontalGradient(
-                        listOf(Color(0xCC000000), Color(0x66000000), Color.Transparent),
+                        listOf(Color(0xC7000000), Color(0x42000000), Color.Transparent),
                     ),
                 )
             }
 
             
-            val unblurredImageRequest = remember(imageUrl) {
+            val unblurredImageRequest = remember(imageUrl, unblurredPlaceholderKey) {
                 ImageRequest.Builder(context)
                     .data(imageUrl)
                     .crossfade(150)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCacheKey(unblurredCacheKey)
+                    .placeholderMemoryCacheKey(unblurredPlaceholderKey)
                     .size(CoilSize.ORIGINAL)
                     .build()
             }
@@ -97,6 +92,7 @@ fun HeroBackground(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.matchParentSize(),
+                    onSuccess = { onImageLoaded?.invoke(imageUrl) }
                 )
 
                 Canvas(Modifier.matchParentSize()) {

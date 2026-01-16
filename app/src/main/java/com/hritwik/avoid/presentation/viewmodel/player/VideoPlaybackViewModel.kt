@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import org.jellyfin.sdk.model.api.MediaStreamType
 import javax.inject.Inject
 
@@ -68,6 +69,7 @@ class VideoPlaybackViewModel @Inject constructor(
     private var savedServerUrl: String? = null
     private var activeTranscodeJob: Job? = null
     private var initializeOptionsJob: Job? = null
+    private var resumeRefreshJob: Job? = null
 
     private fun proxiedUrl(url: String?, token: String?): String? {
         if (url.isNullOrBlank()) return url
@@ -292,6 +294,7 @@ class VideoPlaybackViewModel @Inject constructor(
 
         val preferredAudioLanguage = preferencesManager.getAudioTrackLanguage().first()
         val preferredSubtitleLanguage = preferencesManager.getSubtitleLanguage().first()
+        val savedPlaybackSpeed = preferencesManager.getPlaybackSpeed().first()
         val savedPrefs = preferencesManager.getPlaybackPreferences(mediaItem.id).first()
         val savedTranscodeOption = savedPrefs?.transcodeOption?.let { option ->
             runCatching { PlaybackTranscodeOption.valueOf(option) }.getOrNull()
@@ -347,7 +350,8 @@ class VideoPlaybackViewModel @Inject constructor(
             preferredVideoQuality = preferredQuality,
             playbackTranscodeOption = savedTranscodeOption,
             transcodingSessionId = null,
-            subtitleOffsetMs = savedSubtitleOffsetMs
+            subtitleOffsetMs = savedSubtitleOffsetMs,
+            playbackSpeed = savedPlaybackSpeed
         )
     }
 
@@ -1463,9 +1467,24 @@ class VideoPlaybackViewModel @Inject constructor(
                 )
 
                 _state.value = _state.value.copy(playbackStopReported = true)
+                scheduleResumeRefresh(userId, accessToken, immediate = true)
             } catch (e: Exception) {
                 println("Error reporting playback stop: ${e.message}")
             }
+        }
+    }
+
+    private fun scheduleResumeRefresh(
+        userId: String,
+        accessToken: String,
+        immediate: Boolean = false
+    ) {
+        resumeRefreshJob?.cancel()
+        resumeRefreshJob = viewModelScope.launch(Dispatchers.IO) {
+            if (!immediate) {
+                delay(1500)
+            }
+            runCatching { libraryRepository.getResumeItems(userId, accessToken) }
         }
     }
 
@@ -1475,6 +1494,9 @@ class VideoPlaybackViewModel @Inject constructor(
 
     fun updatePlaybackSpeed(speed: Float) {
         _state.value = _state.value.copy(playbackSpeed = speed)
+        viewModelScope.launch {
+            preferencesManager.savePlaybackSpeed(speed)
+        }
     }
 
     fun updateVolume(volume: Long) {

@@ -91,6 +91,7 @@ import com.hritwik.avoid.presentation.ui.components.dialogs.AudioTrackDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.DecoderSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.DisplayModeSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleDialog
+import com.hritwik.avoid.presentation.ui.components.dialogs.PlaybackSpeedDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleMenuDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleOptionsDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleSizeDialog
@@ -167,6 +168,7 @@ fun ExoPlayerView(
     var showSubtitleMenu by remember { mutableStateOf(false) }
     var showSubtitleOffsetDialog by remember { mutableStateOf(false) }
     var showSubtitleSizeDialog by remember { mutableStateOf(false) }
+    var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
     val audioStreams = playerState.availableAudioStreams
     val subtitleStreams = playerState.availableSubtitleStreams
@@ -541,12 +543,20 @@ fun ExoPlayerView(
             }
         }
 
+        LaunchedEffect(playerState.playbackSpeed, exoPlayer) {
+            exoPlayer.setPlaybackSpeed(playerState.playbackSpeed)
+        }
+
         mediaItemWithSubtitles?.let { resolvedMediaItem ->
             LaunchedEffect(resolvedMediaItem, exoPlayer) {
                 if (pendingTrackChangeEvent != null) {
                     return@LaunchedEffect
                 }
-                val shouldPlay = !playerState.isPaused
+                val shouldPlay = if (exoPlayer.currentMediaItem != null) {
+                    exoPlayer.playWhenReady
+                } else {
+                    !playerState.isPaused
+                }
                 exoPlayer.setMediaItem(resolvedMediaItem)
                 exoPlayer.prepare()
                 exoPlayer.seekTo(restorePositionMs)
@@ -1187,6 +1197,10 @@ fun ExoPlayerView(
                         showSubtitleMenu = false
                         showSubtitleSizeDialog = true
                     },
+                    onPlaybackSpeedClick = {
+                        showSubtitleMenu = false
+                        showPlaybackSpeedDialog = true
+                    },
                     onDismiss = { showSubtitleMenu = false }
                 )
             }
@@ -1204,6 +1218,14 @@ fun ExoPlayerView(
                     currentSize = subtitleSize,
                     onSizeChange = { size -> userDataViewModel.setSubtitleSize(size) },
                     onDismiss = { showSubtitleSizeDialog = false }
+                )
+            }
+
+            if (showPlaybackSpeedDialog) {
+                PlaybackSpeedDialog(
+                    currentSpeed = playerState.playbackSpeed,
+                    onSpeedChange = { speed -> viewModel.updatePlaybackSpeed(speed) },
+                    onDismiss = { showPlaybackSpeedDialog = false }
                 )
             }
 

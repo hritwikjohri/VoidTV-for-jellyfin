@@ -431,13 +431,17 @@ private fun formatOffsetMs(offsetMs: Long): String {
 fun SubtitleMenuDialog(
     onSubtitleOffsetClick: () -> Unit,
     onSubtitleSizeClick: () -> Unit,
+    onPlaybackSpeedClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
     SelectionDialog(
-        title = "Subtitle Options",
+        title = "Player Options",
         onDismiss = onDismiss
     ) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(4).sdp)) {
+            item {
+                SectionLabel(text = "Subtitle Options")
+            }
             item {
                 SelectionItem(
                     title = "Subtitle Offset",
@@ -457,6 +461,20 @@ fun SubtitleMenuDialog(
                     showRadio = false,
                     onClick = {
                         onSubtitleSizeClick()
+                    }
+                )
+            }
+            item {
+                SectionLabel(text = "Playback Settings")
+            }
+            item {
+                SelectionItem(
+                    title = "Playback Speed",
+                    subtitle = "Current playback rate: 1x (Default)",
+                    isSelected = false,
+                    showRadio = false,
+                    onClick = {
+                        onPlaybackSpeedClick()
                     }
                 )
             }
@@ -498,6 +516,55 @@ fun SubtitleSizeDialog(
                     isSelected = isSelected,
                     onClick = {
                         onSizeChange(sizeKey)
+                        onDismiss()
+                    },
+                    focusRequester = if (isSelected) focusRequester else null
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = calculateRoundedValue(8).sdp,
+                top = calculateRoundedValue(8).sdp,
+                bottom = calculateRoundedValue(4).sdp
+            )
+    )
+}
+
+@Composable
+fun PlaybackSpeedDialog(
+    currentSpeed: Float,
+    onSpeedChange: (Float) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val speeds = listOf(0.5f, 1.0f, 1.5f, 1.75f, 2.0f, 2.5f, 2.75f, 3.0f)
+    SelectionDialog(
+        title = "Playback Speed",
+        onDismiss = onDismiss
+    ) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(4).sdp)) {
+            items(speeds, key = { it }) { speed ->
+                val isSelected = kotlin.math.abs(currentSpeed - speed) < 0.01f
+                val label = if (speed == 1.0f) "1x (Default)" else "${speed}x"
+                val focusRequester = remember { FocusRequester() }
+
+                SelectionItem(
+                    title = label,
+                    subtitle = "",
+                    isSelected = isSelected,
+                    onClick = {
+                        onSpeedChange(speed)
                         onDismiss()
                     },
                     focusRequester = if (isSelected) focusRequester else null

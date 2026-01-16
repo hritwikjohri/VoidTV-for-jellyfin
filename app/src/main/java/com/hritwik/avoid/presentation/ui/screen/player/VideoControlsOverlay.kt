@@ -734,7 +734,7 @@ fun VideoControlsOverlay(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(Color.Black.copy(alpha = 0.25f))
             ) {
                 val topPadding = calculateRoundedValue(36).sdp
                 val horizontalPadding = calculateRoundedValue(24).sdp

@@ -54,16 +54,16 @@ object ApiConstants {
 
     
     
-    const val FIELDS_MINIMAL = "PrimaryImageAspectRatio,UserData"
+    const val FIELDS_MINIMAL = "PrimaryImageAspectRatio,UserData,ImageBlurHashes"
 
     
-    const val FIELDS_BASIC = "PrimaryImageAspectRatio,ProductionYear,Genres,Overview,UserData,ParentIndexNumber,IndexNumber"
+    const val FIELDS_BASIC = "PrimaryImageAspectRatio,ProductionYear,Genres,Overview,UserData,ParentIndexNumber,IndexNumber,ImageBlurHashes"
 
     
-    const val FIELDS_STANDARD = "BasicSyncInfo,PrimaryImageAspectRatio,ProductionYear,Genres,Studios,Overview,UserData,ParentIndexNumber,IndexNumber,ProviderIds"
+    const val FIELDS_STANDARD = "BasicSyncInfo,PrimaryImageAspectRatio,ProductionYear,Genres,Studios,Overview,UserData,ParentIndexNumber,IndexNumber,ProviderIds,ImageBlurHashes"
 
     
-    const val FIELDS_FULL = "BasicSyncInfo,CanDelete,PrimaryImageAspectRatio,ProductionYear,Genres,Studios,People,Overview,Taglines,MediaSources,MediaStreams,ParentIndexNumber,IndexNumber,UserData"
+    const val FIELDS_FULL = "BasicSyncInfo,CanDelete,PrimaryImageAspectRatio,ProductionYear,Genres,Studios,People,Overview,Taglines,MediaSources,MediaStreams,ParentIndexNumber,IndexNumber,UserData,ImageBlurHashes"
 
     
     

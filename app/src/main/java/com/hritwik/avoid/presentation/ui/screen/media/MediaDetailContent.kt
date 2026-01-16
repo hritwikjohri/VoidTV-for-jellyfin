@@ -35,6 +35,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,7 +43,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import coil.Coil
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.memory.MemoryCache
+import coil.request.ImageRequest
+import coil.size.Size as CoilSize
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.hritwik.avoid.domain.model.library.MediaItem
 import com.hritwik.avoid.domain.model.playback.PlaybackInfo
 import com.hritwik.avoid.presentation.ui.components.common.HeroBackground
@@ -55,6 +63,7 @@ import com.hritwik.avoid.presentation.ui.components.media.MediaItemCard
 import com.hritwik.avoid.presentation.ui.components.media.PersonCard
 import com.hritwik.avoid.presentation.ui.components.media.SeasonSelectionBar
 import com.hritwik.avoid.presentation.viewmodel.player.VideoPlaybackViewModel
+import com.hritwik.avoid.utils.constants.ApiConstants
 import com.hritwik.avoid.utils.extensions.getBackdropUrl
 import com.hritwik.avoid.utils.extensions.getImageUrl
 import com.hritwik.avoid.utils.extensions.resolveSubtitleOffIndex
@@ -321,20 +330,20 @@ fun MediaDetailContent(
         serverUrl
     ) {
         if (focusedEpisode != null) {
-            val episodeBackdropTag = focusedEpisode.backdropImageTags.firstOrNull()
             val episodePrimaryTag = focusedEpisode.primaryImageTag
+            val episodeBackdropTag = focusedEpisode.backdropImageTags.firstOrNull()
 
             when {
-                episodeBackdropTag != null -> focusedEpisode.getBackdropUrl(serverUrl)
                 episodePrimaryTag != null -> focusedEpisode.getImageUrl(
                     serverUrl = serverUrl,
-                    imageType = "Primary",
+                    imageType = ApiConstants.IMAGE_TYPE_PRIMARY,
                     imageTag = episodePrimaryTag
                 )
+                episodeBackdropTag != null -> focusedEpisode.getBackdropUrl(serverUrl)
                 mediaItem.backdropImageTags.firstOrNull() != null -> mediaItem.getBackdropUrl(serverUrl)
                 mediaItem.primaryImageTag != null -> mediaItem.getImageUrl(
                     serverUrl = serverUrl,
-                    imageType = "Primary",
+                    imageType = ApiConstants.IMAGE_TYPE_PRIMARY,
                     imageTag = mediaItem.primaryImageTag
                 )
 
@@ -345,7 +354,7 @@ fun MediaDetailContent(
                 mediaItem.backdropImageTags.firstOrNull() != null -> mediaItem.getBackdropUrl(serverUrl)
                 mediaItem.primaryImageTag != null -> mediaItem.getImageUrl(
                     serverUrl = serverUrl,
-                    imageType = "Primary",
+                    imageType = ApiConstants.IMAGE_TYPE_PRIMARY,
                     imageTag = mediaItem.primaryImageTag
                 )
                 else -> null
@@ -353,8 +362,80 @@ fun MediaDetailContent(
         }
     }
 
+    val heroBlurHash = remember(
+        focusedEpisode?.id,
+        focusedEpisode?.primaryImageTag,
+        focusedEpisode?.backdropImageTags,
+        mediaItem.id
+    ) {
+        if (focusedEpisode != null) {
+            val episodePrimaryTag = focusedEpisode.primaryImageTag
+            val episodeBackdropTag = focusedEpisode.backdropImageTags.firstOrNull()
+            when {
+                episodePrimaryTag != null -> focusedEpisode.getBlurHash(ApiConstants.IMAGE_TYPE_PRIMARY, episodePrimaryTag)
+                episodeBackdropTag != null -> focusedEpisode.getBlurHash(ApiConstants.IMAGE_TYPE_BACKDROP, episodeBackdropTag)
+                else -> null
+            }
+        } else {
+            val backdropTag = mediaItem.backdropImageTags.firstOrNull()
+            when {
+                backdropTag != null -> mediaItem.getBlurHash(ApiConstants.IMAGE_TYPE_BACKDROP, backdropTag)
+                mediaItem.primaryImageTag != null -> mediaItem.getBlurHash(ApiConstants.IMAGE_TYPE_PRIMARY, mediaItem.primaryImageTag)
+                else -> null
+            }
+        }
+    }
+
+    val context = LocalContext.current
+    var lastSuccessfulHeroUrl by remember { mutableStateOf<String?>(null) }
+    var lastHeroWindowKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
+    LaunchedEffect(focusedEpisode?.id, activeEpisodes, serverUrl) {
+        val baseEpisode = focusedEpisode ?: return@LaunchedEffect
+        val currentIndex = activeEpisodes.indexOfFirst { it.id == baseEpisode.id }
+        if (currentIndex == -1) return@LaunchedEffect
+
+        val imageLoader = Coil.imageLoader(context)
+        val windowStart = (currentIndex - 6).coerceAtLeast(0)
+        val windowEnd = (currentIndex + 6).coerceAtMost(activeEpisodes.lastIndex)
+        val window = activeEpisodes.subList(windowStart, windowEnd + 1)
+        val memoryCache = imageLoader.memoryCache
+
+        withContext(Dispatchers.IO) {
+            val newKeys = mutableSetOf<String>()
+            window.forEach { episode ->
+                val url = when {
+                    episode.primaryImageTag != null -> episode.getImageUrl(
+                        serverUrl = serverUrl,
+                        imageType = ApiConstants.IMAGE_TYPE_PRIMARY,
+                        imageTag = episode.primaryImageTag
+                    )
+                    episode.backdropImageTags.firstOrNull() != null -> episode.getBackdropUrl(serverUrl)
+                    else -> null
+                } ?: return@forEach
+
+                val fullKey = "hero_full:$url"
+                newKeys += fullKey
+
+                val fullRequest = ImageRequest.Builder(context)
+                    .data(url)
+                    .memoryCacheKey(fullKey)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .size(CoilSize.ORIGINAL)
+                    .build()
+                imageLoader.execute(fullRequest)
+            }
+            val evictKeys = lastHeroWindowKeys - newKeys
+            evictKeys.forEach { key -> memoryCache?.remove(MemoryCache.Key(key)) }
+            lastHeroWindowKeys = newKeys
+        }
+    }
+
     HeroBackground(
-        imageUrl = heroBackgroundUrl
+        imageUrl = heroBackgroundUrl,
+        blurHash = heroBlurHash,
+        placeholderUrl = lastSuccessfulHeroUrl,
+        onImageLoaded = { lastSuccessfulHeroUrl = it }
     ) {
         Column(
             modifier = Modifier.padding(start = calculateRoundedValue(80).sdp)

@@ -31,6 +31,8 @@ data class BaseItemDto(
     val imageTags: ImageTags? = null,
     @SerialName("BackdropImageTags")
     val backdropImageTags: List<String> = emptyList(),
+    @SerialName("ImageBlurHashes")
+    val imageBlurHashes: Map<String, Map<String, String>>? = null,
     @SerialName("Genres")
     val genres: List<String> = emptyList(),
     @SerialName("Studios")

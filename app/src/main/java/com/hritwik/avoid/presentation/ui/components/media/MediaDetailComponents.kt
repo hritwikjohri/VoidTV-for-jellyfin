@@ -141,9 +141,10 @@ fun EpisodeThumbnailCard(
         ) {
             val thumbnailUrl = remember(serverUrl, episode.id, episode.primaryImageTag, episode.backdropImageTags) {
                 createEpisodeThumbnailUrl(
-                    serverUrl,
-                    episode.id,
-                    episode.backdropImageTags.firstOrNull() ?: episode.primaryImageTag
+                    serverUrl = serverUrl,
+                    itemId = episode.id,
+                    backdropTag = episode.backdropImageTags.firstOrNull(),
+                    primaryTag = episode.primaryImageTag
                 )
             }
 
@@ -199,9 +200,13 @@ fun EpisodeThumbnailCard(
 private fun createEpisodeThumbnailUrl(
     serverUrl: String,
     itemId: String,
-    imageTag: String?
+    backdropTag: String?,
+    primaryTag: String?
 ): String? {
-    if (imageTag == null) return null
     val baseUrl = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
-    return "${baseUrl}Items/$itemId/Images/Primary?tag=$imageTag&quality=${ApiConstants.DEFAULT_IMAGE_QUALITY}&maxWidth=${ApiConstants.THUMBNAIL_MAX_WIDTH}"
+    return when {
+        backdropTag != null -> "${baseUrl}Items/$itemId/Images/Backdrop?tag=$backdropTag&quality=${ApiConstants.DEFAULT_IMAGE_QUALITY}&maxWidth=${ApiConstants.BACKDROP_MAX_WIDTH}"
+        primaryTag != null -> "${baseUrl}Items/$itemId/Images/Primary?tag=$primaryTag&quality=${ApiConstants.DEFAULT_IMAGE_QUALITY}&maxWidth=${ApiConstants.BACKDROP_MAX_WIDTH}"
+        else -> null
+    }
 }

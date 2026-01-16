@@ -296,6 +296,7 @@ class SearchRepositoryImpl @Inject constructor(
             thumbImageTag = dto.imageTags?.thumb,
             logoImageTag = dto.imageTags?.logo,
             backdropImageTags = dto.backdropImageTags,
+            imageBlurHashes = dto.imageBlurHashes,
             genres = dto.genres,
             isFolder = dto.isFolder,
             childCount = dto.childCount,

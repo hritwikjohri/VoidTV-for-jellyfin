@@ -58,6 +58,7 @@ import com.hritwik.avoid.presentation.ui.components.dialogs.AudioTrackDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.DecoderSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.DisplayModeSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleDialog
+import com.hritwik.avoid.presentation.ui.components.dialogs.PlaybackSpeedDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleMenuDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleOptionsDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleSizeDialog
@@ -141,6 +142,7 @@ fun MpvPlayerView(
     var showSubtitleMenu by remember { mutableStateOf(false) }
     var showSubtitleOffsetDialog by remember { mutableStateOf(false) }
     var showSubtitleSizeDialog by remember { mutableStateOf(false) }
+    var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
     var showDecoderDialog by remember { mutableStateOf(false) }
     var showDisplayDialog by remember { mutableStateOf(false) }
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
@@ -149,6 +151,18 @@ fun MpvPlayerView(
     val subtitleStreams = playerState.availableSubtitleStreams
     val currentAudioTrack = playerState.audioStreamIndex
     val currentSubtitleTrack = playerState.subtitleStreamIndex
+
+    fun resolveMpvAudioId(streamIndex: Int?): Int? {
+        if (streamIndex == null) return null
+        val listIndex = audioStreams.indexOfFirst { it.index == streamIndex }
+        return if (listIndex >= 0) listIndex + 1 else null
+    }
+
+    fun resolveMpvSubtitleId(streamIndex: Int?): Int? {
+        if (streamIndex == null) return null
+        val listIndex = subtitleStreams.indexOfFirst { it.index == streamIndex }
+        return if (listIndex >= 0) listIndex + 1 else null
+    }
 
     var gestureFeedback by remember { mutableStateOf<GestureFeedback?>(null) }
 
@@ -163,6 +177,12 @@ fun MpvPlayerView(
     var autoSkipCancelled by remember { mutableStateOf(false) }
     val initialSubtitleLanguage = subtitleStreams.firstOrNull { it.index == currentSubtitleTrack }?.language
         ?: playerState.preferredSubtitleLanguage
+
+    LaunchedEffect(playerState.playbackSpeed, isMpvInitialized) {
+        if (isMpvInitialized) {
+            MPVLib.setPropertyDouble("speed", playerState.playbackSpeed.toDouble())
+        }
+    }
 
     fun adjustBrightness(delta: Float) {
         val newBrightness = (brightness + delta).coerceIn(0f, 1f)
@@ -364,9 +384,9 @@ fun MpvPlayerView(
             MPVLib.setPropertyBoolean("sub-visibility", true)
         } else {
             MPVLib.command(arrayOf("sub-remove", "all"))
-            val mpvSubtitleIndex = subtitleIndex - audioStreams.size
-            if (mpvSubtitleIndex >= 0) {
-                MPVLib.setPropertyString("sid", mpvSubtitleIndex.toString())
+            val mpvSubtitleId = resolveMpvSubtitleId(subtitleIndex)
+            if (mpvSubtitleId != null) {
+                MPVLib.setPropertyString("sid", mpvSubtitleId.toString())
                 MPVLib.setPropertyBoolean("sub-visibility", true)
             } else {
                 disableMpvSubtitles()
@@ -389,7 +409,9 @@ fun MpvPlayerView(
             shouldRebuildUrl = isRemoteSource,
             startPositionMs = playbackProgress * 1000
         )
-        MPVLib.setPropertyString("aid", newAudioIndex.toString())
+        resolveMpvAudioId(newAudioIndex)?.let { mpvAudioId ->
+            MPVLib.setPropertyString("aid", mpvAudioId.toString())
+        }
     }
 
     val handleSubtitleTrackChange: (Int?) -> Unit = { newSubtitleIndex ->
@@ -418,10 +440,9 @@ fun MpvPlayerView(
                     ?: currentMediaItem.getSubtitleUrl(serverUrl, accessToken, newSubtitleIndex)
                 MPVLib.command(arrayOf("sub-add", filePath, "select"))
             } else {
-                val audioStreamCount = audioStreams.size
-                val mpvSubtitleIndex = newSubtitleIndex - audioStreamCount
-                if (mpvSubtitleIndex >= 0) {
-                    MPVLib.setPropertyString("sid", mpvSubtitleIndex.toString())
+                val mpvSubtitleId = resolveMpvSubtitleId(newSubtitleIndex)
+                if (mpvSubtitleId != null) {
+                    MPVLib.setPropertyString("sid", mpvSubtitleId.toString())
                     MPVLib.setPropertyBoolean("sub-visibility", true)
                 } else {
                     MPVLib.setPropertyString("sid", "no")
@@ -532,7 +553,9 @@ fun MpvPlayerView(
             MPVLib.setPropertyBoolean("pause", false)
         }
 
-        currentAudioTrack?.let { MPVLib.setPropertyString("aid", it.toString()) }
+        resolveMpvAudioId(currentAudioTrack)?.let { mpvAudioId ->
+            MPVLib.setPropertyString("aid", mpvAudioId.toString())
+        }
         applyMpvSubtitleSelection(currentSubtitleTrack)
     }
 
@@ -541,7 +564,9 @@ fun MpvPlayerView(
         if (!isMpvInitialized || event == null) return@LaunchedEffect
 
         event.audioIndex?.let { index ->
-            MPVLib.setPropertyString("aid", index.toString())
+            resolveMpvAudioId(index)?.let { mpvAudioId ->
+                MPVLib.setPropertyString("aid", mpvAudioId.toString())
+            }
         }
         applyMpvSubtitleSelection(event.subtitleIndex)
         pendingTrackChangeEvent = null
@@ -921,6 +946,10 @@ fun MpvPlayerView(
                     showSubtitleMenu = false
                     showSubtitleSizeDialog = true
                 },
+                onPlaybackSpeedClick = {
+                    showSubtitleMenu = false
+                    showPlaybackSpeedDialog = true
+                },
                 onDismiss = { showSubtitleMenu = false }
             )
         }
@@ -938,6 +967,14 @@ fun MpvPlayerView(
                 currentSize = subtitleSize,
                 onSizeChange = { size -> userDataViewModel.setSubtitleSize(size) },
                 onDismiss = { showSubtitleSizeDialog = false }
+            )
+        }
+
+        if (showPlaybackSpeedDialog) {
+            PlaybackSpeedDialog(
+                currentSpeed = playerState.playbackSpeed,
+                onSpeedChange = { speed -> videoPlaybackViewModel.updatePlaybackSpeed(speed) },
+                onDismiss = { showPlaybackSpeedDialog = false }
             )
         }
 

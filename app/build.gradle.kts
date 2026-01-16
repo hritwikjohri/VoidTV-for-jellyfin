@@ -205,6 +205,7 @@ dependencies {
     implementation(libs.androidx.tv.material)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.coil)
+    implementation("com.github.woltapp:blurhash:master-SNAPSHOT")
     implementation(libs.zxing.core)
     implementation(libs.nanohttpd)
     implementation(libs.tink)

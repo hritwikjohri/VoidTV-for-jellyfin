@@ -62,7 +62,7 @@ fun ContentSection(
             .resetFeatureOnFocusExit { onFocusedItemChange(null) },
         state = lazyListState,
         flingBehavior = snapFlingBehavior,
-        verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(42).sdp),
+        verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(28).sdp),
         contentPadding = PaddingValues(bottom = calculateRoundedValue(40).sdp)
     ) {
         if (items.size > 1 && showThumbnails) {
@@ -80,8 +80,8 @@ fun ContentSection(
             }
         }
 
-        item{
-            Spacer(modifier = modifier.height(calculateRoundedValue(8).sdp))
+        item {
+            Spacer(modifier = modifier.height(calculateRoundedValue(3).sdp))
         }
 
         if (resumeItems.isNotEmpty()) {
