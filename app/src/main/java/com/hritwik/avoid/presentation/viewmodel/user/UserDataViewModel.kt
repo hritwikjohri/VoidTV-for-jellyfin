@@ -205,6 +205,19 @@ class UserDataViewModel @Inject constructor(
             PreferenceConstants.DEFAULT_SUBTITLE_SIZE
         )
 
+    val playerProgressColor: StateFlow<String> = preferencesManager.getPlayerProgressColor()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            PreferenceConstants.DEFAULT_PLAYER_PROGRESS_COLOR
+        )
+
+    val playerProgressSeekColor: StateFlow<String> = preferencesManager.getPlayerProgressSeekColor()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            PreferenceConstants.DEFAULT_PLAYER_PROGRESS_SEEK_COLOR
+        )
 
     fun setPlayThemeSongs(enabled: Boolean) {
         viewModelScope.launch { preferencesManager.savePlayThemeSongs(enabled) }
@@ -257,6 +270,14 @@ class UserDataViewModel @Inject constructor(
 
     fun setSubtitleSize(size: String) {
         viewModelScope.launch { preferencesManager.saveSubtitleSize(size) }
+    }
+
+    fun setPlayerProgressColor(colorKey: String) {
+        viewModelScope.launch { preferencesManager.savePlayerProgressColor(colorKey) }
+    }
+
+    fun setPlayerProgressSeekColor(colorKey: String) {
+        viewModelScope.launch { preferencesManager.savePlayerProgressSeekColor(colorKey) }
     }
 
     fun refreshMpvConfig() {

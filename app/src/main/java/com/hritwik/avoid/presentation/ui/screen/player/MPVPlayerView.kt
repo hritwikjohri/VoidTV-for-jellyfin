@@ -68,6 +68,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hritwik.avoid.presentation.ui.state.TrackChangeEvent
 import com.hritwik.avoid.presentation.ui.state.VideoPlaybackState
 import com.hritwik.avoid.presentation.ui.theme.Minsk
+import com.hritwik.avoid.presentation.ui.theme.resolvePlayerProgressColor
+import com.hritwik.avoid.presentation.ui.theme.resolvePlayerProgressColorOrNull
 import com.hritwik.avoid.presentation.viewmodel.player.VideoPlaybackViewModel
 import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
 import com.hritwik.avoid.utils.MpvConfig
@@ -146,6 +148,10 @@ fun MpvPlayerView(
     var showDecoderDialog by remember { mutableStateOf(false) }
     var showDisplayDialog by remember { mutableStateOf(false) }
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
+    val progressBarColorKey by userDataViewModel.playerProgressColor.collectAsStateWithLifecycle()
+    val progressBarColor = resolvePlayerProgressColor(progressBarColorKey)
+    val seekProgressColorKey by userDataViewModel.playerProgressSeekColor.collectAsStateWithLifecycle()
+    val seekProgressColor = resolvePlayerProgressColorOrNull(seekProgressColorKey)
 
     val audioStreams = playerState.availableAudioStreams
     val subtitleStreams = playerState.availableSubtitleStreams
@@ -836,11 +842,13 @@ fun MpvPlayerView(
                 cancelAutoSkip()
                 MPVLib.command(arrayOf("seek", "-10", "relative"))
             },
-            onSkipForward = {
-                cancelAutoSkip()
-                MPVLib.command(arrayOf("seek", "10", "relative"))
-            },
-            skipButtonVisible = showOverlaySkipButton,
+                onSkipForward = {
+                    cancelAutoSkip()
+                    MPVLib.command(arrayOf("seek", "10", "relative"))
+                },
+                progressBarColor = progressBarColor,
+                seekProgressColor = seekProgressColor,
+                skipButtonVisible = showOverlaySkipButton,
             skipButtonLabel = skipLabel,
             onSkipButtonClick = {
                 videoPlaybackViewModel.skipSegment()

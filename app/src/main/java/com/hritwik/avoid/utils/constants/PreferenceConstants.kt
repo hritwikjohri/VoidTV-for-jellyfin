@@ -57,6 +57,8 @@ object PreferenceConstants {
     const val KEY_SUBTITLE_SIZE = "subtitle_size"
     const val KEY_AUDIO_TRACK_LANGUAGE = "audio_track_language"
     const val KEY_SUBTITLE_LANGUAGE = "subtitle_language"
+    const val KEY_PLAYER_PROGRESS_COLOR = "player_progress_color"
+    const val KEY_PLAYER_PROGRESS_SEEK_COLOR = "player_progress_seek_color"
 
     const val KEY_PLAY_THEME_SONGS = "play_theme_songs"
     const val KEY_THEME_SONG_VOLUME = "theme_song_volume"
@@ -105,6 +107,8 @@ object PreferenceConstants {
     const val DEFAULT_STREAMING_QUALITY = "auto"
     const val DEFAULT_DOWNLOAD_LOCATION = "internal"
     const val DEFAULT_SUBTITLE_SIZE = "medium"
+    const val DEFAULT_PLAYER_PROGRESS_COLOR = "purple"
+    const val DEFAULT_PLAYER_PROGRESS_SEEK_COLOR = ""
     const val DEFAULT_LIBRARY_VIEW_TYPE = "grid"
     const val DEFAULT_LIBRARY_SORT_ORDER = "name"
     const val DEFAULT_IMAGE_CACHE_SIZE = 100 

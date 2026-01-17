@@ -24,13 +24,19 @@ fun NetworkImage(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
-    placeholderResId: Int = R.drawable.void_icon
+    placeholderResId: Int = R.drawable.void_icon,
+    memoryCacheKey: String? = null
 ) {
     val context = LocalContext.current
     val rememberedData = remember(data) { data }
     val painter = rememberAsyncImagePainter(
         ImageRequest.Builder(context)
             .data(rememberedData)
+            .apply {
+                if (memoryCacheKey != null) {
+                    memoryCacheKey(memoryCacheKey)
+                }
+            }
             .placeholder(placeholderResId)
             .error(placeholderResId)
             .size(Size.ORIGINAL)

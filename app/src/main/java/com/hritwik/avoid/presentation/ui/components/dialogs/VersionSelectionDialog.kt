@@ -11,12 +11,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +36,8 @@ import com.hritwik.avoid.domain.model.media.MediaSource
 import com.hritwik.avoid.domain.model.media.MediaStream
 import com.hritwik.avoid.domain.model.playback.DisplayMode
 import com.hritwik.avoid.domain.model.playback.PlaybackTranscodeOption
+import com.hritwik.avoid.presentation.ui.theme.normalizeHexColor
+import com.hritwik.avoid.utils.constants.PreferenceConstants
 import com.hritwik.avoid.utils.helpers.calculateRoundedValue
 import ir.kaaveh.sdpcompose.sdp
 
@@ -523,6 +530,93 @@ fun SubtitleSizeDialog(
             }
         }
     }
+}
+
+@Composable
+fun PlayerProgressColorDialog(
+    currentColorKey: String,
+    currentSeekColorKey: String,
+    onColorSaved: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val existingHex = normalizeHexColor(currentColorKey) ?: ""
+    var input by remember(existingHex) { mutableStateOf(existingHex) }
+    val existingSeekHex = normalizeHexColor(currentSeekColorKey) ?: ""
+    var seekInput by remember(existingSeekHex) { mutableStateOf(existingSeekHex) }
+    val focusRequester = remember { FocusRequester() }
+    val normalized = normalizeHexColor(input)
+    val seekNormalized = normalizeHexColor(seekInput)
+    val isValid = input.trim().isEmpty() || normalized != null
+    val isSeekValid = seekInput.trim().isEmpty() || seekNormalized != null
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    VoidAlertDialog(
+        visible = true,
+        title = "Progress Bar Color",
+        onDismissRequest = onDismiss,
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        confirmButton = {
+            Button(
+                enabled = isValid && isSeekValid,
+                onClick = {
+                    val value = if (input.trim().isEmpty()) {
+                        PreferenceConstants.DEFAULT_PLAYER_PROGRESS_COLOR
+                    } else {
+                        normalized ?: currentColorKey
+                    }
+                    val seekValue = if (seekInput.trim().isEmpty()) {
+                        PreferenceConstants.DEFAULT_PLAYER_PROGRESS_SEEK_COLOR
+                    } else {
+                        seekNormalized ?: currentSeekColorKey
+                    }
+                    onColorSaved(value, seekValue)
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        content = {
+            androidx.compose.foundation.layout.Column(
+                verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(12).sdp)
+            ) {
+                Text(
+                    text = "Enter a hex color like #RRGGBB or #AARRGGBB.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .focusable(),
+                    label = { Text("Hex color") },
+                    singleLine = true,
+                    isError = !isValid
+                )
+
+                OutlinedTextField(
+                    value = seekInput,
+                    onValueChange = { seekInput = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusable(),
+                    label = { Text("Seek color (optional)") },
+                    singleLine = true,
+                    isError = !isSeekValid
+                )
+            }
+        }
+    )
 }
 
 @Composable

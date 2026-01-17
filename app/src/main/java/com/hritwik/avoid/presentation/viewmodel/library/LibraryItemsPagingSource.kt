@@ -69,7 +69,8 @@ class LibraryItemsPagingSource(
                     sortBy = sortBy,
                     sortOrder = sortOrder,
                     genre = genre,
-                    studio = studio
+                    studio = studio,
+                    includeItemTypes = includeItemTypes
                 )
             )) {
                 is NetworkResult.Success -> {

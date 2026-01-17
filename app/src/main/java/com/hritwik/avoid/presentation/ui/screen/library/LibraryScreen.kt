@@ -101,19 +101,20 @@ fun LibraryScreen(
     LaunchedEffect(libraryId, authState.authSession, selectedSortOption, sortDirection, selectedGenre, studio, reloadTrigger) {
         if (reloadTrigger == 0) return@LaunchedEffect
         authState.authSession?.let { session ->
-            libraryViewModel.loadLibraryItems(
-                userId = session.userId.id,
-                libraryId = libraryId,
-                accessToken = session.accessToken,
-                sortBy = selectedSortOption.sortFields,
-                sortOrder = sortDirection,
-                supportsAlphaScroller = selectedSortOption.supportsAlphaScroller,
-                genre = selectedGenre,
-                studio = studio,
-                skipCacheRefresh = false
-            )
+                libraryViewModel.loadLibraryItems(
+                    userId = session.userId.id,
+                    libraryId = libraryId,
+                    accessToken = session.accessToken,
+                    sortBy = selectedSortOption.sortFields,
+                    sortOrder = sortDirection,
+                    supportsAlphaScroller = selectedSortOption.supportsAlphaScroller,
+                    genre = selectedGenre,
+                    studio = studio,
+                    includeItemTypes = includeItemTypes,
+                    skipCacheRefresh = false
+                )
+            }
         }
-    }
 
     var previousSortId by remember { mutableStateOf(selectedSortId) }
     var previousSortDirection by remember { mutableStateOf(sortDirectionName) }

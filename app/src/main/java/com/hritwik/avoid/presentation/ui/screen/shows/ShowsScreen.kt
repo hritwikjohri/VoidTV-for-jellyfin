@@ -68,11 +68,26 @@ fun ShowsScreen(
         }
     }
     val nextUpItems = remember(libraryState.nextUpEpisodes) { libraryState.nextUpEpisodes }
-    val recentlyAdded = remember(libraryState.latestItems) {
-        libraryState.latestItems.filter { it.type == ApiConstants.ITEM_TYPE_SERIES }.take(20)
+    val recentlyAddedByLibrary = remember(
+        libraryState.latestItemsByLibrary,
+        libraryState.libraries
+    ) {
+        libraryState.libraries.filter { it.type == LibraryType.TV_SHOWS }
+            .associate { library ->
+                val items = libraryState.latestItemsByLibrary[library.id]
+                    .orEmpty()
+                    .filter { it.type == ApiConstants.ITEM_TYPE_SERIES }
+                    .take(20)
+                library.id to items
+            }
+            .filterValues { it.isNotEmpty() }
     }
-    val recentlyReleased = remember(libraryState.recentlyReleasedShows) {
-        libraryState.recentlyReleasedShows.take(20)
+    val recentlyReleasedByLibrary = remember(
+        libraryState.recentlyReleasedShowsByLibrary
+    ) {
+        libraryState.recentlyReleasedShowsByLibrary.mapValues { (_, items) ->
+            items.filter { it.type == ApiConstants.ITEM_TYPE_SERIES }.take(20)
+        }.filterValues { it.isNotEmpty() }
     }
     val recentlyWatched = remember(libraryState.recentlyWatchedItems) {
         libraryState.recentlyWatchedItems
@@ -86,8 +101,8 @@ fun ShowsScreen(
 
     val hasContent = continueWatching.isNotEmpty() ||
             nextUpItems.isNotEmpty() ||
-            recentlyAdded.isNotEmpty() ||
-            recentlyReleased.isNotEmpty() ||
+            recentlyAddedByLibrary.isNotEmpty() ||
+            recentlyReleasedByLibrary.isNotEmpty() ||
             recentlyWatched.isNotEmpty() ||
             (studios.isNotEmpty() && showLibrary != null)
 
@@ -160,11 +175,14 @@ fun ShowsScreen(
                     }
                 }
 
-                if (recentlyAdded.isNotEmpty()) {
-                    item(key = "shows_recently_added") {
+                recentlyAddedByLibrary.forEach { (libraryId, items) ->
+                    val libraryName = libraryState.libraries
+                        .firstOrNull { it.id == libraryId }
+                        ?.name ?: "Library"
+                    item(key = "shows_recently_added_$libraryId") {
                         PosterRow(
-                            title = "Recently Added",
-                            items = recentlyAdded,
+                            title = "Recently Added in $libraryName",
+                            items = items,
                             serverUrl = serverUrl,
                             sideNavigationFocusRequester = sideNavigationFocusRequester,
                             onMediaItemClick = onMediaItemClick,
@@ -173,11 +191,14 @@ fun ShowsScreen(
                     }
                 }
 
-                if (recentlyReleased.isNotEmpty()) {
-                    item(key = "shows_recently_released") {
+                recentlyReleasedByLibrary.forEach { (libraryId, items) ->
+                    val libraryName = libraryState.libraries
+                        .firstOrNull { it.id == libraryId }
+                        ?.name ?: "Library"
+                    item(key = "shows_recently_released_$libraryId") {
                         PosterRow(
-                            title = "Recently Released",
-                            items = recentlyReleased,
+                            title = "Recently Released in $libraryName",
+                            items = items,
                             serverUrl = serverUrl,
                             sideNavigationFocusRequester = sideNavigationFocusRequester,
                             onMediaItemClick = onMediaItemClick,

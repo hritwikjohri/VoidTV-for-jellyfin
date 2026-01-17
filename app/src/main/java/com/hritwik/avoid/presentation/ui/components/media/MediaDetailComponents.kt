@@ -53,6 +53,8 @@ fun EpisodeThumbnailCard(
     episode: MediaItem,
     episodeNumber: Int?,
     serverUrl: String,
+    seasonId: String? = null,
+    seasonBackdropTag: String? = null,
     highlightColor: Color = Minsk,
     onClick: (MediaItem) -> Unit = {},
     focusRequester: FocusRequester? = null,
@@ -139,12 +141,19 @@ fun EpisodeThumbnailCard(
             elevation = CardDefaults.cardElevation(defaultElevation = calculateRoundedValue(4).sdp),
             shape = focusShape
         ) {
-            val thumbnailUrl = remember(serverUrl, episode.id, episode.primaryImageTag, episode.backdropImageTags) {
+            val thumbnailUrl = remember(
+                serverUrl,
+                episode.id,
+                episode.primaryImageTag,
+                seasonId,
+                seasonBackdropTag
+            ) {
                 createEpisodeThumbnailUrl(
                     serverUrl = serverUrl,
                     itemId = episode.id,
-                    backdropTag = episode.backdropImageTags.firstOrNull(),
-                    primaryTag = episode.primaryImageTag
+                    primaryTag = episode.primaryImageTag,
+                    seasonId = seasonId,
+                    seasonBackdropTag = seasonBackdropTag
                 )
             }
 
@@ -154,7 +163,8 @@ fun EpisodeThumbnailCard(
                         data = thumbnailUrl,
                         contentDescription = episode.name,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        memoryCacheKey = "hero_full:$thumbnailUrl"
                     )
                 } else {
                     EmptyItem()
@@ -200,13 +210,14 @@ fun EpisodeThumbnailCard(
 private fun createEpisodeThumbnailUrl(
     serverUrl: String,
     itemId: String,
-    backdropTag: String?,
-    primaryTag: String?
+    primaryTag: String?,
+    seasonId: String?,
+    seasonBackdropTag: String?
 ): String? {
     val baseUrl = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
     return when {
-        backdropTag != null -> "${baseUrl}Items/$itemId/Images/Backdrop?tag=$backdropTag&quality=${ApiConstants.DEFAULT_IMAGE_QUALITY}&maxWidth=${ApiConstants.BACKDROP_MAX_WIDTH}"
         primaryTag != null -> "${baseUrl}Items/$itemId/Images/Primary?tag=$primaryTag&quality=${ApiConstants.DEFAULT_IMAGE_QUALITY}&maxWidth=${ApiConstants.BACKDROP_MAX_WIDTH}"
+        seasonId != null && seasonBackdropTag != null -> "${baseUrl}Items/$seasonId/Images/Backdrop?tag=$seasonBackdropTag&quality=${ApiConstants.DEFAULT_IMAGE_QUALITY}&maxWidth=${ApiConstants.BACKDROP_MAX_WIDTH}"
         else -> null
     }
 }

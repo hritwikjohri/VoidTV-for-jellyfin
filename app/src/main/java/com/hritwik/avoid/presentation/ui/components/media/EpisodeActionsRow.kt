@@ -88,15 +88,6 @@ fun EpisodeActionsRow(
     
     val buttonColor = seasonAccentColor
 
-    LaunchedEffect(episode.id, authState.authSession) {
-        val session = authState.authSession ?: return@LaunchedEffect
-        videoPlaybackViewModel.initializeVideoOptions(
-            mediaItem = episode,
-            userId = session.userId.id,
-            accessToken = session.accessToken
-        )
-    }
-
     val playbackOptions = playbackState.playbackOptions
     val playbackItemForActions = playbackState.mediaItem ?: episode
     val playbackPositionTicks = playbackItemForActions.userData?.playbackPositionTicks ?: 0L

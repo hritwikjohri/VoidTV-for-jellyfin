@@ -101,6 +101,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hritwik.avoid.presentation.ui.state.TrackChangeEvent
 import com.hritwik.avoid.presentation.ui.state.VideoPlaybackState
 import com.hritwik.avoid.presentation.ui.theme.Minsk
+import com.hritwik.avoid.presentation.ui.theme.resolvePlayerProgressColor
+import com.hritwik.avoid.presentation.ui.theme.resolvePlayerProgressColorOrNull
 import com.hritwik.avoid.presentation.viewmodel.player.VideoPlaybackViewModel
 import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
 import com.hritwik.avoid.utils.constants.PreferenceConstants.SKIP_PROMPT_FLOATING_DURATION_MS
@@ -170,6 +172,10 @@ fun ExoPlayerView(
     var showSubtitleSizeDialog by remember { mutableStateOf(false) }
     var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
+    val progressBarColorKey by userDataViewModel.playerProgressColor.collectAsStateWithLifecycle()
+    val progressBarColor = resolvePlayerProgressColor(progressBarColorKey)
+    val seekProgressColorKey by userDataViewModel.playerProgressSeekColor.collectAsStateWithLifecycle()
+    val seekProgressColor = resolvePlayerProgressColorOrNull(seekProgressColorKey)
     val audioStreams = playerState.availableAudioStreams
     val subtitleStreams = playerState.availableSubtitleStreams
     val currentAudioTrack = playerState.audioStreamIndex
@@ -967,6 +973,8 @@ fun ExoPlayerView(
                     cancelAutoSkip()
                     exoPlayer.seekTo(exoPlayer.currentPosition + 10_000)
                 },
+                progressBarColor = progressBarColor,
+                seekProgressColor = seekProgressColor,
                 skipButtonVisible = showOverlaySkipButton,
                 skipButtonLabel = skipLabel,
                 onSkipButtonClick = {

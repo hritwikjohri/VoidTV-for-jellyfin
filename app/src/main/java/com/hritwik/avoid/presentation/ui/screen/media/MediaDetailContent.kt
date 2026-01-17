@@ -163,7 +163,7 @@ fun MediaDetailContent(
             onEpisodeClick(playbackInfo)
         }
     }
-    val isMovie = mediaItem.type == "Movie"
+    val isMovie = mediaType == MediaType.MOVIE
     val mediaTechnicalMetadata = remember(mediaItem.id, mediaItem.mediaSources) {
         mediaItem.getPrimaryTechnicalMetadata()
     }
@@ -559,25 +559,35 @@ fun MediaDetailContent(
 
                     Spacer(modifier.height(calculateRoundedValue(12).sdp))
 
-                    Row (
-                        horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(8).sdp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
-                        Text(
-                            text = mediaItem.genres[0],
-                            style = MaterialTheme.typography.titleSmall,
-                            color = Color.White.copy(alpha = 0.85f)
-                        )
-                        Text(
-                            text = "•",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = Color.White.copy(alpha = 0.85f)
-                        )
-                        Text(
-                            text = mediaItem.year.toString(),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = Color.White.copy(alpha = 0.85f)
-                        )
+                    val primaryGenre = mediaItem.genres.firstOrNull()
+                    val yearText = mediaItem.year?.toString()
+                    if (primaryGenre != null || yearText != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(8).sdp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            primaryGenre?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                            if (primaryGenre != null && yearText != null) {
+                                Text(
+                                    text = "•",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                            yearText?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier.height(calculateRoundedValue(8).sdp))
@@ -674,6 +684,8 @@ fun MediaDetailContent(
                 verticalArrangement = Arrangement.spacedBy(calculateRoundedValue(16).sdp)
             ) {
                 if (activeEpisodes.isNotEmpty()) {
+                    val currentSeason = displaySeasons.firstOrNull { it.id == selectedSeasonId }
+                    val seasonBackdropTag = currentSeason?.backdropImageTags?.firstOrNull()
                     item {
                         SectionHeader (
                             title = if (selectedSeasonId == extrasSeasonId) "Extras" else "Episodes"
@@ -697,6 +709,8 @@ fun MediaDetailContent(
                                         episode = episode,
                                         serverUrl = serverUrl,
                                         episodeNumber = episodeNumber,
+                                        seasonId = currentSeason?.id,
+                                        seasonBackdropTag = seasonBackdropTag,
                                         highlightColor = seasonAccentColor,
                                         onClick = handleEpisodeClick,
                                         focusRequester = episodeFocusRequesters[index],

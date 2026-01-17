@@ -7,7 +7,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,9 +36,9 @@ import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Subtitles
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,18 +55,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.hritwik.avoid.presentation.ui.theme.Minsk
@@ -111,6 +114,8 @@ fun VideoControlsOverlay(
     onSubtitleOptionsClick: (() -> Unit)? = null,
     videoQualityLabel: String? = null,
     onVideoClick: (() -> Unit)? = null,
+    progressBarColor: Color = Minsk,
+    seekProgressColor: Color? = null,
 ) {
     val overlayFocusRequester = remember { FocusRequester() }
     val previousEpisodeFocusRequester = remember { FocusRequester() }
@@ -129,17 +134,17 @@ fun VideoControlsOverlay(
     val focusShadowElevation = calculateRoundedValue(12).sdp
     val focusHighlightColor = Color(0xCC8F8A7F)
     val pillShape = RoundedCornerShape(percent = 50)
+    val controlButtonSize = calculateRoundedValue(56).sdp
+    val controlIconSize = calculateRoundedValue(40).sdp
 
     fun Modifier.focusedShadow(isFocused: Boolean): Modifier =
         if (isFocused) {
             this
+                .clip(CircleShape)
                 .shadow(focusShadowElevation, CircleShape, clip = false)
-                .drawBehind {
-                    val radius = size.minDimension / 2f * 0.8f
-                    drawCircle(color = focusHighlightColor, radius = radius, center = center)
-                }
+                .background(focusHighlightColor, CircleShape)
         } else {
-            this
+            this.clip(CircleShape)
         }
 
     fun Modifier.focusedPill(isFocused: Boolean): Modifier =
@@ -402,8 +407,10 @@ fun VideoControlsOverlay(
     LaunchedEffect(progressFraction) {
         sliderValue = progressFraction
     }
-    val currentTimeColor = if (isSeeking) VoidBrightAzure else Color.White
-    val progressColor = if (isSeeking) VoidBrightAzure else Minsk
+    val baseProgressColor = progressBarColor
+    val seekHighlightColor = seekProgressColor ?: lerp(baseProgressColor, Color.White, 0.25f)
+    val currentTimeColor = if (isSeeking) seekHighlightColor else Color.White
+    val progressColor = if (isSeeking) seekHighlightColor else baseProgressColor
     val remainingSeconds = (duration - displayedPosition).coerceAtLeast(0L)
     val endTimeText = currentTime.plusSeconds(remainingSeconds).format(timeFormatter)
 
@@ -789,6 +796,7 @@ fun VideoControlsOverlay(
                             },
                             enabled = onPlayPrevious != null,
                             modifier = Modifier
+                                .size(controlButtonSize)
                                 .focusedShadow(previousFocused)
                                 .focusable()
                                 .focusRequester(previousEpisodeFocusRequester)
@@ -810,7 +818,7 @@ fun VideoControlsOverlay(
                                 imageVector = Icons.Default.SkipPrevious,
                                 contentDescription = "Previous",
                                 tint = if (onPlayPrevious != null) Color.White else Color.Gray,
-                                modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                modifier = Modifier.size(controlIconSize),
                             )
                         }
 
@@ -825,6 +833,7 @@ fun VideoControlsOverlay(
                                 updateInteractionTime()
                             },
                             modifier = Modifier
+                                .size(controlButtonSize)
                                 .focusedShadow(skipBackwardFocused)
                                 .focusable()
                                 .focusRequester(skipBackwardFocusRequester)
@@ -850,7 +859,7 @@ fun VideoControlsOverlay(
                                 imageVector = Icons.Default.Replay10,
                                 contentDescription = "Skip backward 10 seconds",
                                 tint = Color.White,
-                                modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                modifier = Modifier.size(controlIconSize),
                             )
                         }
 
@@ -860,6 +869,7 @@ fun VideoControlsOverlay(
                                 updateInteractionTime()
                             },
                             modifier = Modifier
+                                .size(controlButtonSize)
                                 .focusedShadow(playPauseFocused)
                                 .focusable()
                                 .focusRequester(playPauseFocusRequester)
@@ -884,7 +894,7 @@ fun VideoControlsOverlay(
                                         imageVector = Icons.Default.Pause,
                                         contentDescription = "Pause",
                                         tint = Color.White,
-                                        modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                        modifier = Modifier.size(controlIconSize),
                                     )
                                 }
                                 else -> {
@@ -892,7 +902,7 @@ fun VideoControlsOverlay(
                                         imageVector = Icons.Default.PlayArrow,
                                         contentDescription = "Play",
                                         tint = Color.White,
-                                        modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                        modifier = Modifier.size(controlIconSize),
                                     )
                                 }
                             }
@@ -904,6 +914,7 @@ fun VideoControlsOverlay(
                                 updateInteractionTime()
                             },
                             modifier = Modifier
+                                .size(controlButtonSize)
                                 .focusedShadow(skipForwardFocused)
                                 .focusable()
                                 .focusRequester(skipForwardFocusRequester)
@@ -939,7 +950,7 @@ fun VideoControlsOverlay(
                                 imageVector = Icons.Default.Forward10,
                                 contentDescription = "Skip forward 10 seconds",
                                 tint = Color.White,
-                                modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                modifier = Modifier.size(controlIconSize),
                             )
                         }
 
@@ -955,6 +966,7 @@ fun VideoControlsOverlay(
                             },
                             enabled = onPlayNext != null,
                             modifier = Modifier
+                                .size(controlButtonSize)
                                 .focusedShadow(nextFocused)
                                 .focusable()
                                 .focusRequester(nextEpisodeFocusRequester)
@@ -988,7 +1000,7 @@ fun VideoControlsOverlay(
                                 imageVector = Icons.Default.SkipNext,
                                 contentDescription = "Next",
                                 tint = if (onPlayNext != null) Color.White else Color.Gray,
-                                modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                modifier = Modifier.size(controlIconSize),
                             )
                         }
 
@@ -997,19 +1009,13 @@ fun VideoControlsOverlay(
                         if (onVideoClick != null) {
                             val label = videoQualityLabel?.ifBlank { "Auto" } ?: "Auto"
                             val displayLabel = label.removePrefix("Quality: ").trim()
-                            TextButton(
-                                onClick = {
-                                    onVideoClick()
-                                    updateInteractionTime()
-                                },
-                                colors = ButtonDefaults.textButtonColors(
-                                    containerColor = Color.Transparent,
-                                    contentColor = Color.White
-                                ),
+                            val videoInteraction = remember { MutableInteractionSource() }
+                            Box(
                                 modifier = Modifier
                                     .focusedPill(videoFocused)
                                     .focusable()
                                     .focusRequester(videoFocusRequester)
+                                    .height(controlButtonSize)
                                     .focusProperties {
                                         up = FocusRequester.Cancel
                                         down = progressBarFocusRequester
@@ -1037,8 +1043,21 @@ fun VideoControlsOverlay(
                                             updateInteractionTime()
                                         }
                                     }
+                                    .clickable(
+                                        interactionSource = videoInteraction,
+                                        indication = null,
+                                        role = Role.Button
+                                    ) {
+                                        onVideoClick()
+                                        updateInteractionTime()
+                                    }
+                                    .padding(horizontal = calculateRoundedValue(12).sdp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text(text = displayLabel)
+                                Text(
+                                    text = displayLabel,
+                                    color = Color.White
+                                )
                             }
                         }
 
@@ -1049,6 +1068,7 @@ fun VideoControlsOverlay(
                                     updateInteractionTime()
                                 },
                                 modifier = Modifier
+                                    .size(controlButtonSize)
                                     .focusedShadow(audioFocused)
                                     .focusable()
                                     .focusRequester(audioFocusRequester)
@@ -1083,7 +1103,7 @@ fun VideoControlsOverlay(
                                 Icon(
                                     imageVector = Icons.Default.MusicNote,
                                     contentDescription = "Audio",
-                                    modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                    modifier = Modifier.size(controlIconSize),
                                     tint = Color.White
                                 )
                             }
@@ -1096,6 +1116,7 @@ fun VideoControlsOverlay(
                                     updateInteractionTime()
                                 },
                                 modifier = Modifier
+                                    .size(controlButtonSize)
                                     .focusedShadow(subtitleFocused)
                                     .focusable()
                                     .focusRequester(subtitleFocusRequester)
@@ -1130,7 +1151,7 @@ fun VideoControlsOverlay(
                                 Icon(
                                     imageVector = Icons.Default.Subtitles,
                                     contentDescription = "Subtitles",
-                                    modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                    modifier = Modifier.size(controlIconSize),
                                     tint = Color.White
                                 )
                             }
@@ -1143,6 +1164,7 @@ fun VideoControlsOverlay(
                                     updateInteractionTime()
                                 },
                                 modifier = Modifier
+                                    .size(controlButtonSize)
                                     .focusedShadow(subtitleOptionsFocused)
                                     .focusable()
                                     .focusRequester(subtitleOptionsFocusRequester)
@@ -1177,7 +1199,7 @@ fun VideoControlsOverlay(
                                 Icon(
                                     imageVector = Icons.Default.MoreVert,
                                     contentDescription = "Subtitle options",
-                                    modifier = Modifier.size(calculateRoundedValue(40).sdp),
+                                    modifier = Modifier.size(controlIconSize),
                                     tint = Color.White
                                 )
                             }

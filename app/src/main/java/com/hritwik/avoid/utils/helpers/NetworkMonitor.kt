@@ -20,12 +20,6 @@ class NetworkMonitor @Inject constructor(
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    private val partialConnectivityCapability: Int? = runCatching {
-        NetworkCapabilities::class.java
-            .getField("NET_CAPABILITY_PARTIAL_CONNECTIVITY")
-            .getInt(null)
-    }.getOrNull()
-
     private data class ConnectionStatus(
         val isConnected: Boolean,
         val isOnWifi: Boolean
@@ -116,14 +110,6 @@ class NetworkMonitor @Inject constructor(
     }
 
     private fun NetworkCapabilities.asStatus(): ConnectionStatus {
-        val hasInternetCapability = hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        val validatedOrPartial = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ||
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                    partialConnectivityCapability?.let { hasCapability(it) } == true)
-        } else {
-            true
-        }
         val notSuspended = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED) ||
                 hasCapability(NetworkCapabilities.NET_CAPABILITY_FOREGROUND)
@@ -131,7 +117,11 @@ class NetworkMonitor @Inject constructor(
             true
         }
 
-        val isConnected = hasInternetCapability && validatedOrPartial && notSuspended
+        val hasUsableTransport = hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+            hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
+            hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+        val isConnected = hasUsableTransport && notSuspended
         val onWifi = hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
         return ConnectionStatus(isConnected, onWifi)
     }

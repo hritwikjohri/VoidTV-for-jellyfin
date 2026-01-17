@@ -23,7 +23,11 @@ data class RelatedResources(
 )
 
 interface LibraryRepository {
-    suspend fun getUserLibraries(userId: String, accessToken: String): NetworkResult<List<Library>>
+    suspend fun getUserLibraries(
+        userId: String,
+        accessToken: String,
+        forceRefresh: Boolean = false
+    ): NetworkResult<List<Library>>
     suspend fun getLibraryItems(
         userId: String,
         libraryId: String,
@@ -35,6 +39,7 @@ interface LibraryRepository {
         sortOrder: LibrarySortDirection = LibrarySortDirection.ASCENDING,
         genre: String? = null,
         studio: String? = null,
+        includeItemTypes: String? = null,
         enableImages: Boolean = true,
         enableUserData: Boolean = false,
         enableImageTypes: String? = ApiConstants.IMAGE_TYPE_PRIMARY,
@@ -87,6 +92,14 @@ interface LibraryRepository {
     suspend fun getRecentlyReleasedMovies(
         userId: String,
         accessToken: String,
+        limit: Int = 20
+    ): NetworkResult<List<MediaItem>>
+    suspend fun getRecentlyReleasedByLibrary(
+        userId: String,
+        accessToken: String,
+        libraryId: String,
+        includeItemTypes: String,
+        minPremiereDate: String,
         limit: Int = 20
     ): NetworkResult<List<MediaItem>>
     suspend fun getRecentlyReleasedShows(

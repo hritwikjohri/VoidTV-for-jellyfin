@@ -14,10 +14,15 @@ class GetUserLibrariesUseCase @Inject constructor(
 
     data class Params(
         val userId: String,
-        val accessToken: String
+        val accessToken: String,
+        val forceRefresh: Boolean = false
     )
 
     override suspend fun execute(parameters: Params): NetworkResult<List<Library>> {
-        return libraryRepository.getUserLibraries(parameters.userId, parameters.accessToken)
+        return libraryRepository.getUserLibraries(
+            parameters.userId,
+            parameters.accessToken,
+            parameters.forceRefresh
+        )
     }
 }

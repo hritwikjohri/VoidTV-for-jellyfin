@@ -119,6 +119,9 @@ class PreferencesManager @Inject constructor(
         private val SUBTITLE_SIZE = stringPreferencesKey(PreferenceConstants.KEY_SUBTITLE_SIZE)
         private val AUDIO_TRACK_LANGUAGE = stringPreferencesKey(PreferenceConstants.KEY_AUDIO_TRACK_LANGUAGE)
         private val SUBTITLE_LANGUAGE = stringPreferencesKey(PreferenceConstants.KEY_SUBTITLE_LANGUAGE)
+        private val PLAYER_PROGRESS_COLOR = stringPreferencesKey(PreferenceConstants.KEY_PLAYER_PROGRESS_COLOR)
+        private val PLAYER_PROGRESS_SEEK_COLOR =
+            stringPreferencesKey(PreferenceConstants.KEY_PLAYER_PROGRESS_SEEK_COLOR)
         private val PLAY_THEME_SONGS = booleanPreferencesKey(PreferenceConstants.KEY_PLAY_THEME_SONGS)
         private val THEME_SONG_VOLUME = intPreferencesKey(PreferenceConstants.KEY_THEME_SONG_VOLUME)
         private val THEME_SONG_FALLBACK_URL = stringPreferencesKey(PreferenceConstants.KEY_THEME_SONG_FALLBACK_URL)
@@ -228,6 +231,13 @@ class PreferencesManager @Inject constructor(
             }
             if (!preferences.contains(THEME_SONG_FALLBACK_URL)) {
                 preferences[THEME_SONG_FALLBACK_URL] = PreferenceConstants.DEFAULT_THEME_SONG_FALLBACK_URL
+            }
+            if (!preferences.contains(PLAYER_PROGRESS_COLOR)) {
+                preferences[PLAYER_PROGRESS_COLOR] = PreferenceConstants.DEFAULT_PLAYER_PROGRESS_COLOR
+            }
+            if (!preferences.contains(PLAYER_PROGRESS_SEEK_COLOR)) {
+                preferences[PLAYER_PROGRESS_SEEK_COLOR] =
+                    PreferenceConstants.DEFAULT_PLAYER_PROGRESS_SEEK_COLOR
             }
             if (!preferences.contains(AUTO_SKIP_SEGMENTS)) {
                 preferences[AUTO_SKIP_SEGMENTS] = PreferenceConstants.DEFAULT_AUTO_SKIP_SEGMENTS
@@ -685,6 +695,15 @@ class PreferencesManager @Inject constructor(
         preferences[SUBTITLE_LANGUAGE]
     }
 
+    fun getPlayerProgressColor(): Flow<String> = dataStore.data.map { preferences ->
+        preferences[PLAYER_PROGRESS_COLOR] ?: PreferenceConstants.DEFAULT_PLAYER_PROGRESS_COLOR
+    }
+
+    fun getPlayerProgressSeekColor(): Flow<String> = dataStore.data.map { preferences ->
+        preferences[PLAYER_PROGRESS_SEEK_COLOR]
+            ?: PreferenceConstants.DEFAULT_PLAYER_PROGRESS_SEEK_COLOR
+    }
+
     fun getPlayThemeSongs(): Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[PLAY_THEME_SONGS] ?: PreferenceConstants.DEFAULT_PLAY_THEME_SONGS
     }
@@ -824,6 +843,18 @@ class PreferencesManager @Inject constructor(
     suspend fun saveSubtitleSize(size: String) {
         dataStore.edit { preferences ->
             preferences[SUBTITLE_SIZE] = size
+        }
+    }
+
+    suspend fun savePlayerProgressColor(colorKey: String) {
+        dataStore.edit { preferences ->
+            preferences[PLAYER_PROGRESS_COLOR] = colorKey
+        }
+    }
+
+    suspend fun savePlayerProgressSeekColor(colorKey: String) {
+        dataStore.edit { preferences ->
+            preferences[PLAYER_PROGRESS_SEEK_COLOR] = colorKey
         }
     }
 

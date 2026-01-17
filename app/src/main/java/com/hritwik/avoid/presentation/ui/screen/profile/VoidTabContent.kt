@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.HdrOn
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
@@ -42,10 +43,12 @@ import com.hritwik.avoid.presentation.ui.components.dialogs.DisplayModeSelection
 import com.hritwik.avoid.presentation.ui.components.dialogs.HdrFormatSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.MpvConfigDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.PlayerSelectionDialog
+import com.hritwik.avoid.presentation.ui.components.dialogs.PlayerProgressColorDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.SubtitleSizeDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.ThemeSongFallbackDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.ThemeSongVolumeDialog
 import com.hritwik.avoid.presentation.ui.theme.PrimaryText
+import com.hritwik.avoid.presentation.ui.theme.resolvePlayerProgressColorLabel
 import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
 import com.hritwik.avoid.utils.helpers.calculateRoundedValue
 import ir.kaaveh.sdpcompose.sdp
@@ -69,6 +72,8 @@ fun VoidTabContent(
     val hdrFormatPreference = playbackSettings.hdrFormatPreference
     val mpvConfig by userDataViewModel.mpvConfig.collectAsStateWithLifecycle()
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
+    val progressBarColorKey by userDataViewModel.playerProgressColor.collectAsStateWithLifecycle()
+    val seekProgressBarColorKey by userDataViewModel.playerProgressSeekColor.collectAsStateWithLifecycle()
 
     val playThemeFocusRequester = remember { FocusRequester() }
 
@@ -313,6 +318,32 @@ fun VoidTabContent(
                         showSubtitleSizeDialog = false
                     },
                     onDismiss = { showSubtitleSizeDialog = false }
+                )
+            }
+        }
+
+        item {
+            var showProgressColorDialog by remember { mutableStateOf(false) }
+            val progressColorLabel = resolvePlayerProgressColorLabel(progressBarColorKey)
+
+            SettingItem(
+                icon = Icons.Default.ColorLens,
+                title = "Progress Bar Color",
+                subtitle = "Change the player seek bar color",
+                onClick = { showProgressColorDialog = true },
+                trailingText = progressColorLabel
+            )
+
+            if (showProgressColorDialog) {
+                PlayerProgressColorDialog(
+                    currentColorKey = progressBarColorKey,
+                    currentSeekColorKey = seekProgressBarColorKey,
+                    onColorSaved = { colorKey, seekColorKey ->
+                        userDataViewModel.setPlayerProgressColor(colorKey)
+                        userDataViewModel.setPlayerProgressSeekColor(seekColorKey)
+                        showProgressColorDialog = false
+                    },
+                    onDismiss = { showProgressColorDialog = false }
                 )
             }
         }

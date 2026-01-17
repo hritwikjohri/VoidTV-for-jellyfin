@@ -51,6 +51,15 @@ fun LibrarySection(
     val libraryState by libraryViewModel.libraryState.collectAsStateWithLifecycle()
     val isNetworkAvailable by userDataViewModel.isConnected.collectAsStateWithLifecycle()
 
+    LaunchedEffect(authState.authSession) {
+        val session = authState.authSession ?: return@LaunchedEffect
+        libraryViewModel.loadLibraries(
+            userId = session.userId.id,
+            accessToken = session.accessToken,
+            forceRefresh = true
+        )
+    }
+
     if (!isNetworkAvailable) {
         EmptyState(
             icon = Icons.Default.WifiOff,

@@ -23,6 +23,8 @@ data class LibraryState(
     val latestMovies: List<MediaItem> = emptyList(),
     val recentlyReleasedMovies: List<MediaItem> = emptyList(),
     val recentlyReleasedShows: List<MediaItem> = emptyList(),
+    val recentlyReleasedMoviesByLibrary: Map<String, List<MediaItem>> = emptyMap(),
+    val recentlyReleasedShowsByLibrary: Map<String, List<MediaItem>> = emptyMap(),
 
     
     val showStudios: List<Studio> = emptyList(),

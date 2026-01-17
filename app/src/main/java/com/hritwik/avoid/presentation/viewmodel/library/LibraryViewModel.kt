@@ -16,6 +16,7 @@ import com.hritwik.avoid.domain.usecase.library.GetLibraryItemsUseCase
 import com.hritwik.avoid.domain.usecase.library.GetLibraryGenresUseCase
 import com.hritwik.avoid.domain.usecase.library.GetRecentlyReleasedMoviesUseCase
 import com.hritwik.avoid.domain.usecase.library.GetRecentlyReleasedShowsUseCase
+import com.hritwik.avoid.domain.usecase.library.GetRecentlyReleasedByLibraryUseCase
 import com.hritwik.avoid.domain.usecase.library.GetNextUpUseCase
 import com.hritwik.avoid.domain.usecase.library.GetStudiosUseCase
 import com.hritwik.avoid.domain.usecase.library.GetRecommendedItemsUseCase
@@ -49,6 +50,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -62,6 +66,7 @@ class LibraryViewModel @Inject constructor(
     private val getLatestMoviesUseCase: GetLatestMoviesUseCase,
     private val getRecentlyReleasedMoviesUseCase: GetRecentlyReleasedMoviesUseCase,
     private val getRecentlyReleasedShowsUseCase: GetRecentlyReleasedShowsUseCase,
+    private val getRecentlyReleasedByLibraryUseCase: GetRecentlyReleasedByLibraryUseCase,
     private val getNextUpUseCase: GetNextUpUseCase,
     private val getStudiosUseCase: GetStudiosUseCase,
     private val getRecommendedItemsUseCase: GetRecommendedItemsUseCase,
@@ -84,6 +89,7 @@ class LibraryViewModel @Inject constructor(
     val genresState: StateFlow<Map<String, LibraryGenresState>> = _genresState.asStateFlow()
 
     private val pageSize = 30  
+    private val premiereDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US)
     private data class PagerKey(
         val userId: String,
         val libraryIds: List<String>,
@@ -152,6 +158,7 @@ class LibraryViewModel @Inject constructor(
         sortOrder: LibrarySortDirection,
         genre: String?,
         studio: String?,
+        includeItemTypes: String?,
         libraryKey: String
     ) {
         val cacheFields = listOf(
@@ -181,6 +188,7 @@ class LibraryViewModel @Inject constructor(
                     sortOrder = sortOrder,
                     genre = genre,
                     studio = studio,
+                    includeItemTypes = includeItemTypes,
                     forceRefresh = true,
                     enableImages = true, 
                     enableUserData = false, 
@@ -345,7 +353,8 @@ class LibraryViewModel @Inject constructor(
     fun loadLibraries(
         userId: String,
         accessToken: String,
-        refreshResume: Boolean = false
+        refreshResume: Boolean = false,
+        forceRefresh: Boolean = false
     ) {
         viewModelScope.launch {
             _libraryState.value = _libraryState.value.copy(isLoading = true, error = null)
@@ -354,7 +363,13 @@ class LibraryViewModel @Inject constructor(
                 
                 
                 val librariesDeferred = async {
-                    getUserLibrariesUseCase(GetUserLibrariesUseCase.Params(userId, accessToken))
+                    getUserLibrariesUseCase(
+                        GetUserLibrariesUseCase.Params(
+                            userId = userId,
+                            accessToken = accessToken,
+                            forceRefresh = forceRefresh
+                        )
+                    )
                 }
                 val latestItemsDeferred = async {
                     getLatestItemsUseCase(GetLatestItemsUseCase.Params(userId, accessToken))
@@ -415,6 +430,13 @@ class LibraryViewModel @Inject constructor(
                         moviesLibraryId = librariesResult.data.firstOrNull { it.type == LibraryType.MOVIES }?.id
                         launch {
                             loadLatestItemsByLibrary(
+                                userId = userId,
+                                accessToken = accessToken,
+                                libraries = librariesResult.data
+                            )
+                        }
+                        launch {
+                            loadRecentlyReleasedByLibrary(
                                 userId = userId,
                                 accessToken = accessToken,
                                 libraries = librariesResult.data
@@ -713,6 +735,73 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
+    private suspend fun loadRecentlyReleasedByLibrary(
+        userId: String,
+        accessToken: String,
+        libraries: List<Library>
+    ) {
+        if (libraries.isEmpty()) {
+            _libraryState.update { state ->
+                state.copy(
+                    recentlyReleasedMoviesByLibrary = emptyMap(),
+                    recentlyReleasedShowsByLibrary = emptyMap()
+                )
+            }
+            return
+        }
+
+        val movieLibraries = libraries.filter { it.type == LibraryType.MOVIES }
+        val showLibraries = libraries.filter { it.type == LibraryType.TV_SHOWS }
+
+        val minMoviesDate = LocalDate.now().minusMonths(6).format(premiereDateFormatter)
+        val minShowsDate = LocalDate.now().minusMonths(3).format(premiereDateFormatter)
+
+        val moviesByLibrary = coroutineScope {
+            movieLibraries.associate { library ->
+                library.id to async {
+                    when (val result = getRecentlyReleasedByLibraryUseCase(
+                        GetRecentlyReleasedByLibraryUseCase.Params(
+                            userId = userId,
+                            accessToken = accessToken,
+                            libraryId = library.id,
+                            includeItemTypes = ApiConstants.ITEM_TYPE_MOVIE,
+                            minPremiereDate = minMoviesDate
+                        )
+                    )) {
+                        is NetworkResult.Success -> result.data
+                        else -> emptyList()
+                    }
+                }
+            }.mapValues { (_, deferred) -> deferred.await() }
+        }.filterValues { it.isNotEmpty() }
+
+        val showsByLibrary = coroutineScope {
+            showLibraries.associate { library ->
+                library.id to async {
+                    when (val result = getRecentlyReleasedByLibraryUseCase(
+                        GetRecentlyReleasedByLibraryUseCase.Params(
+                            userId = userId,
+                            accessToken = accessToken,
+                            libraryId = library.id,
+                            includeItemTypes = ApiConstants.ITEM_TYPE_SERIES,
+                            minPremiereDate = minShowsDate
+                        )
+                    )) {
+                        is NetworkResult.Success -> result.data
+                        else -> emptyList()
+                    }
+                }
+            }.mapValues { (_, deferred) -> deferred.await() }
+        }.filterValues { it.isNotEmpty() }
+
+        _libraryState.update { state ->
+            state.copy(
+                recentlyReleasedMoviesByLibrary = moviesByLibrary,
+                recentlyReleasedShowsByLibrary = showsByLibrary
+            )
+        }
+    }
+
     fun loadLibraryItems(
         userId: String,
         libraryId: String,
@@ -722,6 +811,7 @@ class LibraryViewModel @Inject constructor(
         supportsAlphaScroller: Boolean = false,
         genre: String? = null,
         studio: String? = null,
+        includeItemTypes: String? = null,
         skipCacheRefresh: Boolean = false
     ) {
         viewModelScope.launch {
@@ -751,6 +841,7 @@ class LibraryViewModel @Inject constructor(
                         sortOrder = sortOrder,
                         genre = genre,
                         studio = studio,
+                        includeItemTypes = includeItemTypes,
                         libraryKey = key
                     )
                 }

@@ -114,7 +114,8 @@ class LibraryRepositoryImpl @Inject constructor(
 
     override suspend fun getUserLibraries(
         userId: String,
-        accessToken: String
+        accessToken: String,
+        forceRefresh: Boolean
     ): NetworkResult<List<Library>> {
         val cached = libraryDao.getAllLibraries(userId).first()
         if (!networkMonitor.isConnected.value) {
@@ -125,7 +126,7 @@ class LibraryRepositoryImpl @Inject constructor(
             }
         }
 
-        if (cached.isNotEmpty()) {
+        if (!forceRefresh && cached.isNotEmpty()) {
             return Success(cached.map { it.toDomain() })
         }
 
@@ -157,6 +158,7 @@ class LibraryRepositoryImpl @Inject constructor(
         sortOrder: LibrarySortDirection,
         genre: String?,
         studio: String?,
+        includeItemTypes: String?,
         enableImages: Boolean,
         enableUserData: Boolean,
         enableImageTypes: String?,
@@ -177,10 +179,7 @@ class LibraryRepositoryImpl @Inject constructor(
             val response = apiService.getLibraryItems(
                 userId = userId,
                 parentId = libraryId,
-                includeItemTypes = listOf(
-                    ApiConstants.ITEM_TYPE_MOVIE,
-                    ApiConstants.ITEM_TYPE_SERIES
-                ).joinToString(","),
+                includeItemTypes = includeItemTypes,
                 recursive = true,
                 startIndex = startIndex,
                 limit = limit,
@@ -707,6 +706,38 @@ class LibraryRepositoryImpl @Inject constructor(
             val response = apiService.getItemsByFilters(
                 userId = userId,
                 includeItemTypes = "Movie",
+                recursive = true,
+                startIndex = 0,
+                limit = limit,
+                sortBy = "PremiereDate",
+                sortOrder = "Descending",
+                minPremiereDate = minPremiereDate,
+                enableImageTypes = DEFAULT_MEDIA_IMAGE_TYPES,
+                authorization = authHeader
+            )
+
+            response.items.map { dto ->
+                mapToMediaItem(dto)
+            }
+        }
+    }
+
+    override suspend fun getRecentlyReleasedByLibrary(
+        userId: String,
+        accessToken: String,
+        libraryId: String,
+        includeItemTypes: String,
+        minPremiereDate: String,
+        limit: Int
+    ): NetworkResult<List<MediaItem>> {
+        val serverUrl = getServerUrl()
+        return safeApiCall(serverUrl) {
+            val apiService = createApiService(serverUrl)
+            val authHeader = JellyfinApiService.createAuthHeader(deviceId, token = accessToken)
+            val response = apiService.getItemsByFilters(
+                userId = userId,
+                parentId = libraryId,
+                includeItemTypes = includeItemTypes,
                 recursive = true,
                 startIndex = 0,
                 limit = limit,
