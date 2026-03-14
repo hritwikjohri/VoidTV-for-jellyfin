@@ -2058,7 +2058,7 @@ class LibraryRepositoryImpl @Inject constructor(
                 recursive = false,  
                 startIndex = 0,
                 limit = Int.MAX_VALUE,
-                sortBy = "SortName",
+                sortBy = "Default",
                 sortOrder = "Ascending",
                 fields = ApiConstants.FIELDS_BASIC,
                 enableImageTypes = DEFAULT_MEDIA_IMAGE_TYPES,
@@ -2067,7 +2067,37 @@ class LibraryRepositoryImpl @Inject constructor(
 
             response.items.map { dto ->
                 mapToMediaItem(dto)
-            }.sortedBy { it.indexNumber ?: Int.MAX_VALUE }
+            }
+        }
+    }
+
+    override suspend fun getSiblingEpisodes(
+        userId: String,
+        seriesId: String,
+        episodeId: String,
+        accessToken: String
+    ): NetworkResult<List<MediaItem>> {
+        val serverUrl = getServerUrl()
+        return safeApiCall(serverUrl) {
+            val apiService = createApiService(serverUrl)
+
+            val authHeader = JellyfinApiService.createAuthHeader(deviceId, token = accessToken)
+            val response = apiService.getEpisodes(
+                seriesId = seriesId,
+                userId = userId,
+                adjacentTo = episodeId,
+                startIndex = 0,
+                limit = Int.MAX_VALUE,
+                isMissing = false,
+                sortBy = "Default",
+                fields = ApiConstants.FIELDS_BASIC,
+                enableImageTypes = DEFAULT_MEDIA_IMAGE_TYPES,
+                authorization = authHeader
+            )
+
+            response.items.map { dto ->
+                mapToMediaItem(dto)
+            }
         }
     }
 

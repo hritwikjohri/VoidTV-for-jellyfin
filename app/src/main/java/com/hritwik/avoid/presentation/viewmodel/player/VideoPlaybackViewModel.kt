@@ -1057,7 +1057,7 @@ class VideoPlaybackViewModel @Inject constructor(
             return
         }
 
-        when (val episodesResult = libraryRepository.getEpisodes(userId, seasonId, accessToken)) {
+        when (val episodesResult = libraryRepository.getSiblingEpisodes(userId, mediaItem.seriesId, mediaItem.id, accessToken)) {
             is NetworkResult.Success -> {
                 val episodes = episodesResult.data
                 val resolvedEpisodes = episodes.map { episode ->
@@ -1070,15 +1070,10 @@ class VideoPlaybackViewModel @Inject constructor(
                 )
             }
             else -> {
-                val existingIndex = _state.value.siblingEpisodes.indexOfFirst { it.id == mediaItem.id }
-                if (existingIndex != -1) {
-                    _state.value = _state.value.copy(currentEpisodeIndex = existingIndex)
-                } else {
-                    _state.value = _state.value.copy(
-                        siblingEpisodes = emptyList(),
-                        currentEpisodeIndex = -1
-                    )
-                }
+                _state.value = _state.value.copy(
+                    siblingEpisodes = emptyList(),
+                    currentEpisodeIndex = -1
+                )
             }
         }
     }
