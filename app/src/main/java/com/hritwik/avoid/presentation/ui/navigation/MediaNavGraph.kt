@@ -26,6 +26,7 @@ import com.hritwik.avoid.presentation.ui.screen.shows.ShowsScreen
 import com.hritwik.avoid.presentation.viewmodel.auth.AuthServerViewModel
 import com.hritwik.avoid.presentation.viewmodel.library.LibraryViewModel
 import com.hritwik.avoid.presentation.viewmodel.media.MediaViewModel
+import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
 
 private const val LIBRARY_DETAIL_PRESERVE_CACHE_KEY = "libraryDetail_preserveCache"
 
@@ -33,6 +34,7 @@ fun NavGraphBuilder.mediaGraph(
     navController: NavHostController,
     authViewModel: AuthServerViewModel,
     libraryViewModel: LibraryViewModel,
+    userDataViewModel: UserDataViewModel,
     sideNavigationFocusRequester: FocusRequester
 ) {
     composable(Routes.LIBRARY) {
@@ -200,6 +202,8 @@ fun NavGraphBuilder.mediaGraph(
             .distinct()
         val shouldPreserveCache =
             backStackEntry.savedStateHandle.get<Boolean>(LIBRARY_DETAIL_PRESERVE_CACHE_KEY) == true
+        val playbackSettings by userDataViewModel.playbackSettings.collectAsStateWithLifecycle()
+        val hideWatched = playbackSettings.hideWatched
 
         LibraryScreen(
             libraryId = libraryId,
@@ -207,6 +211,7 @@ fun NavGraphBuilder.mediaGraph(
             studio = studioName,
             libraryIds = allLibraryIds,
             libraryType = libraryType,
+            hideWatched = hideWatched,
             onBackClick = { navController.navigateUp() },
             onMediaItemClick = { mediaItem: MediaItem ->
                 backStackEntry.savedStateHandle[LIBRARY_DETAIL_PRESERVE_CACHE_KEY] = true

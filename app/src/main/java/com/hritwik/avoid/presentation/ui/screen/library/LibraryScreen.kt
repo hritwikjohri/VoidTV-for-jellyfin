@@ -45,6 +45,7 @@ fun LibraryScreen(
     studio: String? = null,
     libraryIds: List<String> = listOf(libraryId),
     libraryType: LibraryType? = null,
+    hideWatched: Boolean = false,
     onBackClick: () -> Unit = {},
     onMediaItemClick: (MediaItem) -> Unit = {},
     onMediaItemFocus: (MediaItem) -> Unit = {},
@@ -98,7 +99,7 @@ fun LibraryScreen(
 
     
     
-    LaunchedEffect(libraryId, authState.authSession, selectedSortOption, sortDirection, selectedGenre, studio, reloadTrigger) {
+    LaunchedEffect(libraryId, authState.authSession, selectedSortOption, sortDirection, selectedGenre, studio, reloadTrigger, hideWatched) {
         if (reloadTrigger == 0) return@LaunchedEffect
         authState.authSession?.let { session ->
                 libraryViewModel.loadLibraryItems(
@@ -111,7 +112,8 @@ fun LibraryScreen(
                     genre = selectedGenre,
                     studio = studio,
                     includeItemTypes = includeItemTypes,
-                    skipCacheRefresh = false
+                    skipCacheRefresh = false,
+                    isPlayed = if (hideWatched) false else null
                 )
             }
         }
@@ -170,7 +172,8 @@ fun LibraryScreen(
                 selectedGenre,
                 studio,
                 includeItemTypes,
-                pagerCacheVersion
+                pagerCacheVersion,
+                hideWatched
             ) {
                 libraryViewModel.libraryItemsPager(
                     userId = session.userId.id,
@@ -181,7 +184,8 @@ fun LibraryScreen(
                     sortOrder = sortDirection,
                     genre = selectedGenre,
                     studio = studio,
-                    includeItemTypes = includeItemTypes
+                    includeItemTypes = includeItemTypes,
+                    isPlayed = if (hideWatched) false else null
                 )
             }
             pager.collectAsLazyPagingItems()

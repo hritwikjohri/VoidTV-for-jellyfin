@@ -98,7 +98,8 @@ class LibraryViewModel @Inject constructor(
         val sortOrder: LibrarySortDirection,
         val genre: String?,
         val studio: String?,
-        val includeItemTypes: String?
+        val includeItemTypes: String?,
+        val isPlayed: Boolean? = null
     )
     private val pagerCache = mutableMapOf<PagerKey, Flow<PagingData<MediaItem>>>()
     private val _pagerCacheVersion = MutableStateFlow(0)
@@ -948,10 +949,11 @@ class LibraryViewModel @Inject constructor(
         sortOrder: LibrarySortDirection,
         genre: String?,
         studio: String?,
-        includeItemTypes: String?
+        includeItemTypes: String?,
+        isPlayed: Boolean? = null
     ): Flow<PagingData<MediaItem>> {
         val normalizedLibraryIds = libraryIds.filter { it.isNotBlank() }.ifEmpty { listOf(libraryId) }
-        val key = PagerKey(userId, normalizedLibraryIds, accessToken, sortBy, sortOrder, genre, studio, includeItemTypes)
+        val key = PagerKey(userId, normalizedLibraryIds, accessToken, sortBy, sortOrder, genre, studio, includeItemTypes, isPlayed)
         return pagerCache.getOrPut(key) {
             Pager(
                 PagingConfig(
@@ -971,7 +973,8 @@ class LibraryViewModel @Inject constructor(
                     sortOrder = sortOrder,
                     genre = genre,
                     studio = studio,
-                    includeItemTypes = includeItemTypes
+                    includeItemTypes = includeItemTypes,
+                    isPlayed = isPlayed
                 )
             }.flow.cachedIn(viewModelScope)
         }

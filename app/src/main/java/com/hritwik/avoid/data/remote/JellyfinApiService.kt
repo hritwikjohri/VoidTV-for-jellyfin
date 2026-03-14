@@ -117,6 +117,7 @@ interface JellyfinApiService {
         @Query("SortOrder") sortOrder: String = "Ascending",
         @Query("Genres") genres: String? = null,
         @Query("Studios") studios: String? = null,
+        @Query("IsPlayed") isPlayed: Boolean? = null,
         @Query("Fields") fields: String? = null,  
         @Query("EnableImageTypes") enableImageTypes: String? = "Primary",  
         @Query("EnableImages") enableImages: Boolean = true,

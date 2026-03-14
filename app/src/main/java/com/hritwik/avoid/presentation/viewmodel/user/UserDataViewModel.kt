@@ -70,7 +70,9 @@ class UserDataViewModel @Inject constructor(
         val externalPlayerEnabled: Boolean,
         val playerType: PlayerType,
         val directPlayEnabled: Boolean,
-        val hdrFormatPreference: HdrFormatPreference
+        val hdrFormatPreference: HdrFormatPreference,
+        val controlsTimeoutSeconds: Int,
+        val hideWatched: Boolean
     )
 
     private data class PlaybackSettingsBundle(
@@ -85,6 +87,8 @@ class UserDataViewModel @Inject constructor(
         val externalPlayerEnabled: Boolean = PreferenceConstants.DEFAULT_EXTERNAL_PLAYER_ENABLED,
         val directPlayEnabled: Boolean = PreferenceConstants.DEFAULT_DIRECT_PLAY_ENABLED,
         val hdrFormatPreference: HdrFormatPreference = HdrFormatPreference.AUTO,
+        val controlsTimeoutSeconds: Int = PreferenceConstants.DEFAULT_CONTROLS_TIMEOUT_SECONDS,
+        val hideWatched: Boolean = PreferenceConstants.DEFAULT_LIBRARY_FILTER_WATCHED
     )
 
     init {
@@ -152,11 +156,19 @@ class UserDataViewModel @Inject constructor(
                     externalPlayerEnabled = bundle.externalPlayerEnabled,
                     playerType = player,
                     directPlayEnabled = bundle.directPlayEnabled,
-                    hdrFormatPreference = bundle.hdrFormatPreference
+                    hdrFormatPreference = bundle.hdrFormatPreference,
+                    controlsTimeoutSeconds = bundle.controlsTimeoutSeconds,
+                    hideWatched = bundle.hideWatched
                 )
             }
             .combine(preferencesManager.getDirectPlayEnabled()) { settings, directPlay ->
                 settings.copy(directPlayEnabled = directPlay)
+            }
+            .combine(preferencesManager.getControlsTimeoutSeconds()) { settings, timeout ->
+                settings.copy(controlsTimeoutSeconds = timeout)
+            }
+            .combine(preferencesManager.getLibraryFilterWatched()) { settings, hideWatched ->
+                settings.copy(hideWatched = hideWatched)
             }
             .stateIn(
                 viewModelScope,
@@ -173,7 +185,9 @@ class UserDataViewModel @Inject constructor(
                     PreferenceConstants.DEFAULT_EXTERNAL_PLAYER_ENABLED,
                     PlayerType.fromValue(PreferenceConstants.DEFAULT_PLAYER_TYPE),
                     PreferenceConstants.DEFAULT_DIRECT_PLAY_ENABLED,
-                    HdrFormatPreference.fromValue(PreferenceConstants.DEFAULT_HDR_FORMAT_PREFERENCE)
+                    HdrFormatPreference.fromValue(PreferenceConstants.DEFAULT_HDR_FORMAT_PREFERENCE),
+                    PreferenceConstants.DEFAULT_CONTROLS_TIMEOUT_SECONDS,
+                    PreferenceConstants.DEFAULT_LIBRARY_FILTER_WATCHED
                 )
             )
 
@@ -300,6 +314,14 @@ class UserDataViewModel @Inject constructor(
 
     fun setHdrFormatPreference(preference: HdrFormatPreference) {
         viewModelScope.launch { preferencesManager.saveHdrFormatPreference(preference) }
+    }
+
+    fun setControlsTimeoutSeconds(seconds: Int) {
+        viewModelScope.launch { preferencesManager.saveControlsTimeoutSeconds(seconds) }
+    }
+
+    fun setLibraryFilterWatched(hideWatched: Boolean) {
+        viewModelScope.launch { preferencesManager.saveLibraryFilterWatched(hideWatched) }
     }
 
     fun setSubtitleSize(size: String) {

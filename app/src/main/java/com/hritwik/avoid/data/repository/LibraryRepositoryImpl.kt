@@ -178,7 +178,8 @@ class LibraryRepositoryImpl @Inject constructor(
         enableImages: Boolean,
         enableUserData: Boolean,
         enableImageTypes: String?,
-        fields: String?
+        fields: String?,
+        isPlayed: Boolean?
     ): NetworkResult<List<MediaItem>> {
         
         
@@ -203,6 +204,7 @@ class LibraryRepositoryImpl @Inject constructor(
                 sortOrder = sortOrder.toApiValue(),
                 genres = genre,
                 studios = studio,
+                isPlayed = isPlayed,
                 fields = fields ?: ApiConstants.FIELDS_MINIMAL,
                 enableImageTypes = enableImageTypes ?: ApiConstants.IMAGE_TYPE_PRIMARY,
                 enableImages = enableImages,

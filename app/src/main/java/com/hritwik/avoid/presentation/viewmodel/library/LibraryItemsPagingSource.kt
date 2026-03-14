@@ -19,7 +19,8 @@ class LibraryItemsPagingSource(
     private val sortOrder: LibrarySortDirection,
     private val genre: String?,
     private val studio: String?,
-    private val includeItemTypes: String?
+    private val includeItemTypes: String?,
+    private val isPlayed: Boolean? = null
 ) : PagingSource<Int, MediaItem>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItem> {
@@ -70,7 +71,8 @@ class LibraryItemsPagingSource(
                     sortOrder = sortOrder,
                     genre = genre,
                     studio = studio,
-                    includeItemTypes = includeItemTypes
+                    includeItemTypes = includeItemTypes,
+                    isPlayed = isPlayed
                 )
             )) {
                 is NetworkResult.Success -> {

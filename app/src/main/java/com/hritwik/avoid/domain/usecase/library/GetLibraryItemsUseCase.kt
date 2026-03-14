@@ -29,7 +29,8 @@ class GetLibraryItemsUseCase @Inject constructor(
         val enableImages: Boolean = true,
         val enableUserData: Boolean = false,
         val enableImageTypes: String? = ApiConstants.IMAGE_TYPE_PRIMARY,
-        val fields: String? = ApiConstants.FIELDS_MINIMAL
+        val fields: String? = ApiConstants.FIELDS_MINIMAL,
+        val isPlayed: Boolean? = null
     )
 
     override suspend fun execute(parameters: Params): NetworkResult<List<MediaItem>> {
@@ -48,7 +49,8 @@ class GetLibraryItemsUseCase @Inject constructor(
             enableImages = parameters.enableImages,
             enableUserData = parameters.enableUserData,
             enableImageTypes = parameters.enableImageTypes,
-            fields = parameters.fields
+            fields = parameters.fields,
+            isPlayed = parameters.isPlayed
         )
     }
 }

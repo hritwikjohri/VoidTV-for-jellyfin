@@ -24,7 +24,9 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,6 +75,7 @@ fun VoidTabContent(
     val externalPlayerEnabled = playbackSettings.externalPlayerEnabled
     val directPlayEnabled = playbackSettings.directPlayEnabled
     val hdrFormatPreference = playbackSettings.hdrFormatPreference
+    val hideWatched = playbackSettings.hideWatched
     val mpvConfig by userDataViewModel.mpvConfig.collectAsStateWithLifecycle()
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
     val progressBarColorKey by userDataViewModel.playerProgressColor.collectAsStateWithLifecycle()
@@ -289,6 +292,16 @@ fun VoidTabContent(
                 subtitle = "Switch display mode and refresh rate to match content",
                 checked = frameRateSwitchEnabled,
                 onCheckedChange = { userDataViewModel.setFrameRateSwitchEnabled(it) }
+            )
+        }
+
+        item {
+            SettingItemWithSwitch(
+                icon = Icons.Default.VisibilityOff,
+                title = "Hide Watched",
+                subtitle = "Hide items you've already watched from libraries",
+                checked = hideWatched,
+                onCheckedChange = { userDataViewModel.setLibraryFilterWatched(it) }
             )
         }
 

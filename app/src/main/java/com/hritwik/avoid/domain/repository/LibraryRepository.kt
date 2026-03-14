@@ -43,7 +43,8 @@ interface LibraryRepository {
         enableImages: Boolean = true,
         enableUserData: Boolean = false,
         enableImageTypes: String? = ApiConstants.IMAGE_TYPE_PRIMARY,
-        fields: String? = ApiConstants.FIELDS_MINIMAL
+        fields: String? = ApiConstants.FIELDS_MINIMAL,
+        isPlayed: Boolean? = null
     ): NetworkResult<List<MediaItem>>
     suspend fun getLibraryGenres(
         userId: String,

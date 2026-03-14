@@ -23,6 +23,7 @@ import com.hritwik.avoid.presentation.ui.state.InitializationState
 import com.hritwik.avoid.presentation.ui.state.NavigationState
 import com.hritwik.avoid.presentation.viewmodel.auth.AuthServerViewModel
 import com.hritwik.avoid.presentation.viewmodel.library.LibraryViewModel
+import com.hritwik.avoid.presentation.viewmodel.user.UserDataViewModel
 import kotlinx.coroutines.delay
 
 @Composable
@@ -32,6 +33,7 @@ fun VoidNavigation(navigator: Navigator = rememberNavigator()) {
     val authState by authViewModel.state.collectAsStateWithLifecycle()
     var navigationState by remember { mutableStateOf<NavigationState>(NavigationState.Loading) }
     val libraryViewModel: LibraryViewModel = hiltViewModel()
+    val userDataViewModel: UserDataViewModel = hiltViewModel()
     val startDestination = if (authState.isAuthenticated) Routes.HOME else Routes.SERVER_SETUP
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -107,7 +109,7 @@ fun VoidNavigation(navigator: Navigator = rememberNavigator()) {
             ) {
                 authGraph(navController, authViewModel)
                 homeGraph(navController, authViewModel, libraryViewModel, sideNavigationFocusRequester)
-                mediaGraph(navController, authViewModel, libraryViewModel, sideNavigationFocusRequester)
+                mediaGraph(navController, authViewModel, libraryViewModel, userDataViewModel, sideNavigationFocusRequester)
                 profileGraph(navController, authViewModel, sideNavigationFocusRequester)
             }
 
