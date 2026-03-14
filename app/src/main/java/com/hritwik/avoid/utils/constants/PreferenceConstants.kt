@@ -77,6 +77,7 @@ object PreferenceConstants {
     const val KEY_PREFER_HDR_OVER_DV = "prefer_hdr_over_dolby_vision"
     const val KEY_HDR_FORMAT_PREFERENCE = "hdr_format_preference"
     const val KEY_FRAME_RATE_SWITCH_ENABLED = "frame_rate_switch_enabled"
+    const val KEY_CONTROLS_TIMEOUT_SECONDS = "controls_timeout_seconds"
 
     const val KEY_LIBRARY_VIEW_TYPE = "library_view_type"
     const val KEY_LIBRARY_SORT_ORDER = "library_sort_order"
@@ -150,6 +151,7 @@ object PreferenceConstants {
     const val DEFAULT_PREFER_HDR_OVER_DV = false
     const val DEFAULT_HDR_FORMAT_PREFERENCE = "auto"
     const val DEFAULT_FRAME_RATE_SWITCH_ENABLED = false
+    const val DEFAULT_CONTROLS_TIMEOUT_SECONDS = 5
     const val DEFAULT_SERVER_LEGACY_PLAYBACK = false
     const val DEFAULT_REMEMBER_ACCOUNT = true
 

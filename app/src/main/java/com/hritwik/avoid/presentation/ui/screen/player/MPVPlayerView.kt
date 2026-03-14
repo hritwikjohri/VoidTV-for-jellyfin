@@ -109,6 +109,7 @@ fun MpvPlayerView(
     serverUrl: String,
     autoSkipSegments: Boolean,
     gesturesEnabled: Boolean,
+    controlsTimeoutMs: Long = 5000L,
     onBackClick: () -> Unit,
     videoPlaybackViewModel: VideoPlaybackViewModel,
     userDataViewModel: UserDataViewModel
@@ -1047,7 +1048,8 @@ fun MpvPlayerView(
             onSubtitleClick = { showSubtitleDialog = true },
             onSubtitleOptionsClick = { showSubtitleMenu = true },
             videoQualityLabel = playerState.playbackTranscodeOption.label,
-            onVideoClick = { videoPlaybackViewModel.showVideoQualityDialog() }
+            onVideoClick = { videoPlaybackViewModel.showVideoQualityDialog() },
+            controlsTimeoutMs = controlsTimeoutMs
         )
 
 

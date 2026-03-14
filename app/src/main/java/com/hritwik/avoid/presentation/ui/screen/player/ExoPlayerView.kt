@@ -147,6 +147,7 @@ fun ExoPlayerView(
     audioPassthroughEnabled: Boolean,
     hdrFormatPreference: HdrFormatPreference,
     gesturesEnabled: Boolean,
+    controlsTimeoutMs: Long = 5000L,
     onBackClick: () -> Unit,
     viewModel: VideoPlaybackViewModel,
     userDataViewModel: UserDataViewModel
@@ -1218,7 +1219,8 @@ fun ExoPlayerView(
                     null
                 },
                 videoQualityLabel = playerState.playbackTranscodeOption.label,
-                onVideoClick = { viewModel.showVideoQualityDialog() }
+                onVideoClick = { viewModel.showVideoQualityDialog() },
+                controlsTimeoutMs = controlsTimeoutMs
             )
 
 

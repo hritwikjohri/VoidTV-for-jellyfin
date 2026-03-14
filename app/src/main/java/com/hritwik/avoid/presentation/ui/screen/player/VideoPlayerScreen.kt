@@ -56,6 +56,7 @@ fun VideoPlayerScreen(
     val frameRateSwitchEnabled = playbackSettings.frameRateSwitchEnabled
     val hdrFormatPreference = playbackSettings.hdrFormatPreference
     val autoSkipSegments = playbackSettings.autoSkipSegments
+    val controlsTimeoutSeconds = playbackSettings.controlsTimeoutSeconds
     val personalization by userDataViewModel.personalizationSettings.collectAsStateWithLifecycle()
     val gesturesEnabled = personalization.gesturesEnabled
     val userId = authState.authSession?.userId?.id ?: ""
@@ -124,6 +125,7 @@ fun VideoPlayerScreen(
                 serverUrl = serverUrl,
                 autoSkipSegments = autoSkipSegments,
                 gesturesEnabled = gesturesEnabled,
+                controlsTimeoutMs = controlsTimeoutSeconds * 1000L,
                 onBackClick = onBackClick,
                 videoPlaybackViewModel = viewModel,
                 userDataViewModel = userDataViewModel
@@ -143,6 +145,7 @@ fun VideoPlayerScreen(
                 frameRateSwitchEnabled = frameRateSwitchEnabled,
                 hdrFormatPreference = hdrFormatPreference,
                 gesturesEnabled = gesturesEnabled,
+                controlsTimeoutMs = controlsTimeoutSeconds * 1000L,
                 onBackClick = onBackClick,
                 decoderMode = decoderMode,
                 viewModel = viewModel,

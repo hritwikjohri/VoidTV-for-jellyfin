@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,6 +44,7 @@ import com.hritwik.avoid.presentation.ui.components.common.SettingItemWithSwitch
 import com.hritwik.avoid.presentation.ui.components.dialogs.DeviceInfoDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.DisplayModeSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.HdrFormatSelectionDialog
+import com.hritwik.avoid.presentation.ui.components.dialogs.ControlsTimeoutDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.MpvConfigDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.PlayerSelectionDialog
 import com.hritwik.avoid.presentation.ui.components.dialogs.PlayerProgressColorDialog
@@ -73,6 +75,7 @@ fun VoidTabContent(
     val externalPlayerEnabled = playbackSettings.externalPlayerEnabled
     val directPlayEnabled = playbackSettings.directPlayEnabled
     val hdrFormatPreference = playbackSettings.hdrFormatPreference
+    val controlsTimeoutSeconds = playbackSettings.controlsTimeoutSeconds
     val mpvConfig by userDataViewModel.mpvConfig.collectAsStateWithLifecycle()
     val subtitleSize by userDataViewModel.subtitleSize.collectAsStateWithLifecycle()
     val progressBarColorKey by userDataViewModel.playerProgressColor.collectAsStateWithLifecycle()
@@ -290,6 +293,29 @@ fun VoidTabContent(
                 checked = frameRateSwitchEnabled,
                 onCheckedChange = { userDataViewModel.setFrameRateSwitchEnabled(it) }
             )
+        }
+
+        item {
+            var showControlsTimeoutDialog by remember { mutableStateOf(false) }
+
+            SettingItem(
+                icon = Icons.Default.Timer,
+                title = "Controls Timeout",
+                subtitle = "How long on-screen controls stay visible",
+                onClick = { showControlsTimeoutDialog = true },
+                trailingText = "${controlsTimeoutSeconds}s"
+            )
+
+            if (showControlsTimeoutDialog) {
+                ControlsTimeoutDialog(
+                    currentSeconds = controlsTimeoutSeconds,
+                    onSecondsSelected = { seconds ->
+                        userDataViewModel.setControlsTimeoutSeconds(seconds)
+                        showControlsTimeoutDialog = false
+                    },
+                    onDismiss = { showControlsTimeoutDialog = false }
+                )
+            }
         }
 
         item {

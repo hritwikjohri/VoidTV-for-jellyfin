@@ -116,6 +116,7 @@ fun VideoControlsOverlay(
     onVideoClick: (() -> Unit)? = null,
     progressBarColor: Color = Minsk,
     seekProgressColor: Color? = null,
+    controlsTimeoutMs: Long = 5000L,
 ) {
     val overlayFocusRequester = remember { FocusRequester() }
     val previousEpisodeFocusRequester = remember { FocusRequester() }
@@ -214,7 +215,7 @@ fun VideoControlsOverlay(
             while (true) {
                 delay(1000)
                 val currentTime = System.currentTimeMillis()
-                if (currentTime - lastInteractionTime >= 5000) {
+                if (currentTime - lastInteractionTime >= controlsTimeoutMs) {
                     onDismissControls()
                     break
                 }

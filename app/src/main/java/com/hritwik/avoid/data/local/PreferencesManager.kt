@@ -138,6 +138,7 @@ class PreferencesManager @Inject constructor(
             booleanPreferencesKey(PreferenceConstants.KEY_FRAME_RATE_SWITCH_ENABLED)
         private val PREFER_HDR_OVER_DV = booleanPreferencesKey(PreferenceConstants.KEY_PREFER_HDR_OVER_DV)
         private val HDR_FORMAT_PREFERENCE = stringPreferencesKey(PreferenceConstants.KEY_HDR_FORMAT_PREFERENCE)
+        private val CONTROLS_TIMEOUT_SECONDS = intPreferencesKey(PreferenceConstants.KEY_CONTROLS_TIMEOUT_SECONDS)
 
         private const val TINK_KEYSET_PREF = "void_tink_keyset"
         private const val TINK_KEYSET_NAME = "tink_keyset"
@@ -783,6 +784,10 @@ class PreferencesManager @Inject constructor(
         HdrFormatPreference.fromValue(raw)
     }
 
+    fun getControlsTimeoutSeconds(): Flow<Int> = dataStore.data.map { preferences ->
+        preferences[CONTROLS_TIMEOUT_SECONDS] ?: PreferenceConstants.DEFAULT_CONTROLS_TIMEOUT_SECONDS
+    }
+
     
 
     fun getImageCacheSize(): Flow<Long> = dataStore.data.map { preferences ->
@@ -987,6 +992,12 @@ class PreferencesManager @Inject constructor(
     suspend fun saveHdrFormatPreference(preference: HdrFormatPreference) {
         dataStore.edit { preferences ->
             preferences[HDR_FORMAT_PREFERENCE] = preference.value
+        }
+    }
+
+    suspend fun saveControlsTimeoutSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[CONTROLS_TIMEOUT_SECONDS] = seconds
         }
     }
 
