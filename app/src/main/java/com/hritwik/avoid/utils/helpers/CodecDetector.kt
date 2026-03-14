@@ -518,6 +518,7 @@ object CodecDetector {
                             MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvavPer -> "Profile 0 (dvav.per)"
                             MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvavPen -> "Profile 1 (dvav.pen)"
                             MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvavSe -> "Profile 9 (dvav.se)"
+                            MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvav110 -> "Profile 10 (dvav.av1)"
                             else -> "Profile ${profileLevel.profile}"
                         }
                         if (!profiles.contains(profileName)) {
