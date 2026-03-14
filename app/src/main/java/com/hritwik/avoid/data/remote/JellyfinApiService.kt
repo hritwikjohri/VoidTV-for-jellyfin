@@ -125,6 +125,26 @@ interface JellyfinApiService {
         @Header("X-Emby-Authorization") authorization: String
     ): LibraryResponse
 
+    @GET("Shows/{seriesId}/Episodes")
+    suspend fun getEpisodes(
+        @Path("seriesId") seriesId: String,
+        @Query("userId") userId: String,
+        @Query("Fields") fields: String? = null,
+        @Query("Season") season: Int? = null,
+        @Query("SeasonId") seasonId: String? = null,
+        @Query("isMissing") isMissing: Boolean? = null,
+        @Query("adjacentTo") adjacentTo: String? = null,
+        @Query("startItemId") startItemId: String? = null,
+        @Query("StartIndex") startIndex: Int = 0,
+        @Query("Limit") limit: Int = 50000,
+        @Query("EnableImages") enableImages: Boolean = true,
+        @Query("ImageTypeLimit") imageTypeLimit: Int? = null,
+        @Query("EnableImageTypes") enableImageTypes: String? = "Primary",
+        @Query("EnableUserData") enableUserData: Boolean? = null,
+        @Query("sortBy") sortBy: String = "Default",
+        @Header("X-Emby-Authorization") authorization: String
+    ): LibraryResponse
+
     @GET("Items/{itemId}/Credits")
     suspend fun getItemCredits(
         @Path("itemId") itemId: String,

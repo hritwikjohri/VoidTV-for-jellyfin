@@ -205,8 +205,7 @@ class MediaViewModel @Inject constructor(
             )
         }) {
             is NetworkResult.Success -> {
-                val sorted = result.data.sortedBy { it.indexNumber ?: Int.MAX_VALUE }
-                _state.value = _state.value.copy(episodes = sorted)
+                _state.value = _state.value.copy(episodes = result.data)
             }
             else -> {  }
         }

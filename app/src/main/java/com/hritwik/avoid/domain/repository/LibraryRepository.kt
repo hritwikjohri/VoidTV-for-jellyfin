@@ -322,6 +322,12 @@ interface LibraryRepository {
         seasonId: String,
         accessToken: String
     ): NetworkResult<List<MediaItem>>
+    suspend fun getSiblingEpisodes(
+        userId: String,
+        seriesId: String,
+        episodeId: String,
+        accessToken: String
+    ): NetworkResult<List<MediaItem>>
     suspend fun getNextUpEpisodes(
         userId: String,
         accessToken: String,
