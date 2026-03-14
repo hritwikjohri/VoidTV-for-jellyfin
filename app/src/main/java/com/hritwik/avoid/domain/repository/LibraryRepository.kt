@@ -19,7 +19,8 @@ import com.hritwik.avoid.utils.constants.ApiConstants
 
 data class RelatedResources(
     val similar: List<MediaItem>,
-    val special: List<MediaItem>
+    val special: List<MediaItem>,
+    val localTrailers: List<MediaItem> = emptyList()
 )
 
 interface LibraryRepository {
@@ -186,6 +187,11 @@ interface LibraryRepository {
         limit: Int = 10
     ): NetworkResult<List<MediaItem>>
     suspend fun getSpecialFeatures(
+        mediaId: String,
+        userId: String,
+        accessToken: String
+    ): NetworkResult<List<MediaItem>>
+    suspend fun getLocalTrailers(
         mediaId: String,
         userId: String,
         accessToken: String

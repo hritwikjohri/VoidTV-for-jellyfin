@@ -82,6 +82,7 @@ fun MediaDetailContent(
     episodes: List<MediaItem> = emptyList(),
     seasons: List<MediaItem> = emptyList(),
     specialFeatures: List<MediaItem> = emptyList(),
+    localTrailers: List<MediaItem> = emptyList(),
     initialSeasonId: String? = null,
     initialEpisodeIndex: Int = 0,
     shouldAutoFocusEpisode: Boolean = false,
@@ -669,15 +670,17 @@ fun MediaDetailContent(
 
             if(isMovie){
                 Spacer(modifier.height(calculateRoundedValue(20).sdp))
-
-                MediaActionButtons(
-                    modifier = Modifier.padding(horizontal = calculateRoundedValue(20).sdp),
-                    mediaItem = mediaItem,
-                    serverUrl = serverUrl,
-                    onPlayClick = onPlayClick,
-                    playButtonFocusRequester = playFocusRequester
-                )
             }
+
+            MediaActionButtons(
+                modifier = Modifier.padding(horizontal = calculateRoundedValue(20).sdp),
+                mediaItem = mediaItem,
+                serverUrl = serverUrl,
+                localTrailers = localTrailers,
+                onPlayClick = onPlayClick,
+                playButtonFocusRequester = playFocusRequester,
+                isMovie = isMovie
+            )
 
             LazyColumn (
                 modifier = modifier.fillMaxSize(),
@@ -700,8 +703,12 @@ fun MediaDetailContent(
                                     EpisodeThumbnailCard(
                                         modifier = Modifier.onPreviewKeyEvent { event ->
                                             if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionUp) {
-                                                requestSelectedSeasonFocus()
-                                                true
+                                                if (showSeasonBar) {
+                                                    requestSelectedSeasonFocus()
+                                                    true
+                                                } else {
+                                                    false
+                                                }
                                             } else {
                                                 false
                                             }

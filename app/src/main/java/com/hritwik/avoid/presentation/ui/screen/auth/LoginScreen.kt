@@ -217,7 +217,7 @@ fun LoginScreen(
                             }
                             .focusProperties {
                                 up = usernameFR
-                                down = signInFR
+                                down = quickConnectFR
                             }
                             .semantics { contentDescription = "Password field" },
                         enabled = !state.isLoading,
@@ -330,7 +330,7 @@ fun LoginScreen(
                     .onPreviewKeyEvent { e ->
                         if (e.type == KeyEventType.KeyDown) {
                             when (e.key) {
-                                Key.DirectionUp -> { passwordFR.requestFocus(); true }
+                                Key.DirectionUp -> { quickConnectFR.requestFocus(); true }
                                 Key.DirectionLeft -> { quickConnectFR.requestFocus(); true }
                                 Key.DirectionRight -> { changeServerFR.requestFocus(); true }
                                 else -> false
@@ -338,7 +338,7 @@ fun LoginScreen(
                         } else false
                     }
                     .focusProperties {
-                        up = passwordFR
+                        up = quickConnectFR
                         left = quickConnectFR
                         right = changeServerFR
                     }

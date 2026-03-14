@@ -9,6 +9,7 @@ data class MediaDetailState(
     val mediaItem: MediaItem? = null,
     val similarItems: List<MediaItem> = emptyList(),
     val specialFeatures: List<MediaItem> = emptyList(),
+    val localTrailers: List<MediaItem> = emptyList(),
     val seasons: List<MediaItem>? = null,
     val episodes: List<MediaItem>? = null,
     val nextUpEpisode: MediaItem? = null,

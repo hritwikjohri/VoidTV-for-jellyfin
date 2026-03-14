@@ -160,7 +160,8 @@ class MediaViewModel @Inject constructor(
             is NetworkResult.Success -> {
                 _state.value = _state.value.copy(
                     similarItems = result.data.similar,
-                    specialFeatures = result.data.special
+                    specialFeatures = result.data.special,
+                    localTrailers = result.data.localTrailers
                 )
             }
             else -> {  }

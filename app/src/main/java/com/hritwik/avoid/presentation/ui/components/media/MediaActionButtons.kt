@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -79,9 +80,11 @@ fun MediaActionButtons(
     mediaItem: MediaItem,
     serverUrl: String,
     playbackItem: MediaItem? = null,
+    localTrailers: List<MediaItem> = emptyList(),
     onPlayClick: (PlaybackInfo) -> Unit,
     playButtonSize: Int = 48,
     showFavIcon: Boolean = true,
+    isMovie: Boolean = true,
     playButtonFocusRequester: FocusRequester? = null,
     authViewModel: AuthServerViewModel = hiltViewModel(),
     userDataViewModel: UserDataViewModel = hiltViewModel(),
@@ -212,16 +215,38 @@ fun MediaActionButtons(
         }
     }
 
+    val playTrailer: () -> Unit = {
+        localTrailers.firstOrNull()?.let { trailer ->
+            val source = trailer.mediaSources.firstOrNull()
+            if (source == null) {
+                context.showToast("Trailer unavailable")
+                return@let
+            }
+            val playbackInfo = PlaybackInfo(
+                mediaItem = trailer,
+                mediaSourceId = source.id,
+                audioStreamIndex = source.defaultAudioStream?.index,
+                subtitleStreamIndex = source.defaultSubtitleStream?.index,
+                startPosition = 0L,
+                maxBitrate = source.bitrate
+            )
+            onPlayClick(playbackInfo)
+        }
+    }
+
+    val hasLocalTrailers = localTrailers.isNotEmpty()
     val playFocusRequester = playButtonFocusRequester ?: remember { FocusRequester() }
     val versionFocusRequester = remember { FocusRequester() }
     val audioFocusRequester = remember { FocusRequester() }
     val subtitleFocusRequester = remember { FocusRequester() }
     val favoriteFocusRequester = remember(showFavIcon) { if (showFavIcon) FocusRequester() else null }
+    val trailerFocusRequester = remember { FocusRequester() }
 
     val versionInteractionSource = remember { MutableInteractionSource() }
     val audioInteractionSource = remember { MutableInteractionSource() }
     val subtitleInteractionSource = remember { MutableInteractionSource() }
     val favoriteInteractionSource = remember { MutableInteractionSource() }
+    val trailerInteractionSource = remember { MutableInteractionSource() }
     val videoCodecText = playbackOptions.selectedVideoStream?.codec
         ?.takeIf { it.isNotBlank() }
         ?.trim()
@@ -270,71 +295,84 @@ fun MediaActionButtons(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(14).sdp)
                 ){
-                    Box(
-                        modifier = Modifier
-                            .size(haloContainerSize)
-                            .graphicsLayer {
-                                val scale = 1f + (haloScale - 1f) * haloProgress
-                                scaleX = scale
-                                scaleY = scale
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (haloBorderWidth > 0.dp && haloProgress > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .size(playButtonSize + haloBorderWidth * 2)
-                                    .border(
-                                        width = haloBorderWidth,
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(
-                                                Color.White.copy(alpha = 0.9f * haloProgress),
-                                                lerp(buttonColor, Color.White, 0.6f).copy(alpha = haloProgress)
-                                            ),
-                                            start = Offset(0f, 0f),
-                                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                                        ),
-                                        shape = CircleShape
-                                    )
-                                    .graphicsLayer { alpha = haloProgress },
-                                contentAlignment = Alignment.Center
-                            ) {}
-                        }
-
-                        DynamicPlayButton(
+                    if (isMovie) {
+                        Box(
                             modifier = Modifier
-                                .size(playButtonSize)
-                                .dpadNavigation(
-                                    focusRequester = playFocusRequester,
-                                    interactionSource = playInteractionSource,
-                                    onClick = playMovie,
-                                    onMoveFocus = { direction ->
-                                        when (direction) {
-                                            FocusDirection.Right -> {
-                                                favoriteFocusRequester?.requestFocus()
-                                                true
+                                .size(haloContainerSize)
+                                .graphicsLayer {
+                                    val scale = 1f + (haloScale - 1f) * haloProgress
+                                    scaleX = scale
+                                    scaleY = scale
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (haloBorderWidth > 0.dp && haloProgress > 0f) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(playButtonSize + haloBorderWidth * 2)
+                                        .border(
+                                            width = haloBorderWidth,
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color.White.copy(alpha = 0.9f * haloProgress),
+                                                    lerp(buttonColor, Color.White, 0.6f).copy(alpha = haloProgress)
+                                                ),
+                                                start = Offset(0f, 0f),
+                                                end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                                            ),
+                                            shape = CircleShape
+                                        )
+                                        .graphicsLayer { alpha = haloProgress },
+                                    contentAlignment = Alignment.Center
+                                ) {}
+                            }
+
+                            DynamicPlayButton(
+                                modifier = Modifier
+                                    .size(playButtonSize)
+                                    .dpadNavigation(
+                                        focusRequester = playFocusRequester,
+                                        interactionSource = playInteractionSource,
+                                        onClick = playMovie,
+                                        onMoveFocus = { direction ->
+                                            when (direction) {
+                                                FocusDirection.Right -> {
+                                                    when {
+                                                        favoriteFocusRequester != null -> {
+                                                            favoriteFocusRequester.requestFocus()
+                                                            true
+                                                        }
+
+                                                        hasLocalTrailers -> {
+                                                            trailerFocusRequester.requestFocus()
+                                                            true
+                                                        }
+
+                                                        else -> false
+                                                    }
+                                                }
+                                                else -> false
                                             }
-                                            else -> false
-                                        }
-                                    },
-                                    applyClickModifier = false,
-                                    showFocusOutline = false
-                                ),
-                            onClick = playMovie,
-                            dominantColor = buttonColor,
-                            buttonSize = playButtonSize,
-                            iconSize = (playButtonSize.value / 2).dp,
-                            mediaItem = playbackItemForActions,
-                            hasResumableProgress = hasResumableProgress,
-                            focusRequester = playFocusRequester
-                        )
+                                        },
+                                        applyClickModifier = false,
+                                        showFocusOutline = false
+                                    ),
+                                onClick = playMovie,
+                                dominantColor = buttonColor,
+                                buttonSize = playButtonSize,
+                                iconSize = (playButtonSize.value / 2).dp,
+                                mediaItem = playbackItemForActions,
+                                hasResumableProgress = hasResumableProgress,
+                                focusRequester = playFocusRequester
+                            )
+                        }
                     }
 
                     if (showFavIcon) {
                         val favoriteRequester = favoriteFocusRequester
                         if (favoriteRequester != null) {
                             Box(
-                                modifier = Modifier.padding(start = calculateRoundedValue(16).sdp)
+                                modifier = Modifier.padding(start = if (isMovie) calculateRoundedValue(16).sdp else 0.sdp)
                             ) {
                                 MediaFavoriteChip(
                                     modifier = Modifier.focusRequester(favoriteRequester),
@@ -355,12 +393,30 @@ fun MediaActionButtons(
                                     onMoveFocus = { direction ->
                                         when (direction) {
                                             FocusDirection.Left -> {
-                                                playFocusRequester.requestFocus()
-                                                true
+                                                when {
+                                                    isMovie -> {
+                                                        playFocusRequester.requestFocus()
+                                                        true
+                                                    }
+
+                                                    else -> false
+                                                }
                                             }
+
                                             FocusDirection.Right -> {
-                                                versionFocusRequester.requestFocus()
-                                                true
+                                                when {
+                                                    hasLocalTrailers -> {
+                                                        trailerFocusRequester.requestFocus()
+                                                        true
+                                                    }
+
+                                                    isMovie -> {
+                                                        versionFocusRequester.requestFocus()
+                                                        true
+                                                    }
+
+                                                    else -> false
+                                                }
                                             }
                                             else -> false
                                         }
@@ -370,105 +426,163 @@ fun MediaActionButtons(
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.padding(start = calculateRoundedValue(16).sdp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(10).sdp)
-                    ) {
-                        EpisodeInfoChip(
-                            label = "Resolution",
-                            value = resolutionLabel ?: "Unknown",
-                            accentColor = buttonColor
-                        )
-                        EpisodeInfoChip(
-                            label = null,
-                            value = playbackState.currentVideoRangeText,
-                            accentColor = buttonColor
-                        )
+                    if (hasLocalTrailers) {
+                        Box(
+                            modifier = Modifier.padding(start = calculateRoundedValue(16).sdp)
+                        ) {
+                            TrailerButton(
+                                modifier = Modifier.focusRequester(trailerFocusRequester),
+                                accentColor = buttonColor,
+                                interactionSource = trailerInteractionSource,
+                                onClick = playTrailer,
+                                onMoveFocus = { direction ->
+                                    when (direction) {
+                                        FocusDirection.Left -> {
+                                            when {
+                                                favoriteFocusRequester != null -> {
+                                                    favoriteFocusRequester.requestFocus()
+                                                    true
+                                                }
+
+                                                isMovie -> {
+                                                    playFocusRequester.requestFocus()
+                                                    true
+                                                }
+
+                                                else -> false
+                                            }
+                                        }
+
+                                        FocusDirection.Right -> {
+                                            if (isMovie) {
+                                                versionFocusRequester.requestFocus()
+                                                true
+                                            } else {
+                                                false
+                                            }
+                                        }
+
+                                        else -> false
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    if (isMovie) {
+                        Row(
+                            modifier = Modifier.padding(start = calculateRoundedValue(16).sdp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(10).sdp)
+                        ) {
+                            EpisodeInfoChip(
+                                label = "Resolution",
+                                value = resolutionLabel ?: "Unknown",
+                                accentColor = buttonColor
+                            )
+                            EpisodeInfoChip(
+                                label = null,
+                                value = playbackState.currentVideoRangeText,
+                                accentColor = buttonColor
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier.weight(1f))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(14).sdp)
-                ) {
-                    EpisodeInfoChip(
-                        label = "Version",
-                        value = versionText,
-                        focusRequester = versionFocusRequester,
-                        onClick = { videoPlaybackViewModel.showVersionDialog() },
-                        interactionSource = versionInteractionSource,
-                        accentColor = buttonColor,
-                        baseContainerAlpha = 0.18f,
-                        onMoveFocus = { direction ->
-                            when (direction) {
-                                FocusDirection.Left -> {
-                                    favoriteFocusRequester?.requestFocus()
-                                    true
-                                }
+                if (isMovie) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(14).sdp)
+                    ) {
+                        EpisodeInfoChip(
+                            label = "Version",
+                            value = versionText,
+                            focusRequester = versionFocusRequester,
+                            onClick = { videoPlaybackViewModel.showVersionDialog() },
+                            interactionSource = versionInteractionSource,
+                            accentColor = buttonColor,
+                            baseContainerAlpha = 0.18f,
+                            onMoveFocus = { direction ->
+                                when (direction) {
+                                    FocusDirection.Left -> {
+                                        when {
+                                            hasLocalTrailers -> {
+                                                trailerFocusRequester.requestFocus()
+                                                true
+                                            }
 
-                                FocusDirection.Right -> {
-                                    audioFocusRequester.requestFocus()
-                                    true
-                                }
+                                            favoriteFocusRequester != null -> {
+                                                favoriteFocusRequester.requestFocus()
+                                                true
+                                            }
 
-                                else -> false
+                                            else -> false
+                                        }
+                                    }
+
+                                    FocusDirection.Right -> {
+                                        audioFocusRequester.requestFocus()
+                                        true
+                                    }
+
+                                    else -> false
+                                }
                             }
-                        }
-                    )
+                        )
 
-                    EpisodeInfoChip(
-                        label = "Audio",
-                        value = audioText,
-                        focusRequester = audioFocusRequester,
-                        onClick = { videoPlaybackViewModel.showAudioDialog() },
-                        interactionSource = audioInteractionSource,
-                        accentColor = buttonColor,
-                        baseContainerAlpha = 0.18f,
-                        onMoveFocus = { direction ->
-                            when (direction) {
-                                FocusDirection.Left -> {
-                                    versionFocusRequester.requestFocus()
-                                    true
+                        EpisodeInfoChip(
+                            label = "Audio",
+                            value = audioText,
+                            focusRequester = audioFocusRequester,
+                            onClick = { videoPlaybackViewModel.showAudioDialog() },
+                            interactionSource = audioInteractionSource,
+                            accentColor = buttonColor,
+                            baseContainerAlpha = 0.18f,
+                            onMoveFocus = { direction ->
+                                when (direction) {
+                                    FocusDirection.Left -> {
+                                        versionFocusRequester.requestFocus()
+                                        true
+                                    }
+
+                                    FocusDirection.Right -> {
+                                        subtitleFocusRequester.requestFocus()
+                                        true
+                                    }
+
+                                    else -> false
                                 }
-
-                                FocusDirection.Right -> {
-                                    subtitleFocusRequester.requestFocus()
-                                    true
-                                }
-
-                                else -> false
                             }
-                        }
-                    )
+                        )
 
-                    EpisodeInfoChip(
-                        label = "Subtitles",
-                        value = subtitleText,
-                        focusRequester = subtitleFocusRequester,
-                        onClick = { videoPlaybackViewModel.showSubtitleDialog() },
-                        interactionSource = subtitleInteractionSource,
-                        accentColor = buttonColor,
-                        baseContainerAlpha = 0.18f,
-                        onMoveFocus = { direction ->
-                            when (direction) {
-                                FocusDirection.Left -> {
-                                    audioFocusRequester.requestFocus()
-                                    true
+                        EpisodeInfoChip(
+                            label = "Subtitles",
+                            value = subtitleText,
+                            focusRequester = subtitleFocusRequester,
+                            onClick = { videoPlaybackViewModel.showSubtitleDialog() },
+                            interactionSource = subtitleInteractionSource,
+                            accentColor = buttonColor,
+                            baseContainerAlpha = 0.18f,
+                            onMoveFocus = { direction ->
+                                when (direction) {
+                                    FocusDirection.Left -> {
+                                        audioFocusRequester.requestFocus()
+                                        true
+                                    }
+                                    else -> false
                                 }
-                                else -> false
                             }
-                        }
-                    )
+                        )
 
-                    EpisodeInfoChip(
-                        label = null,
-                        value = videoCodecText,
-                        accentColor = buttonColor,
-                        baseContainerAlpha = 0.18f
-                    )
+                        EpisodeInfoChip(
+                            label = null,
+                            value = videoCodecText,
+                            accentColor = buttonColor,
+                            baseContainerAlpha = 0.18f
+                        )
+                    }
                 }
             }
         }
@@ -628,6 +742,117 @@ private fun MediaFavoriteChip(
             )
             Text(
                 text = statusText,
+                color = labelColor,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                fontSize = calculateRoundedValue(10).ssp
+            )
+        }
+    }
+}
+
+@Composable
+private fun TrailerButton(
+    modifier: Modifier = Modifier,
+    accentColor: Color,
+    interactionSource: MutableInteractionSource,
+    onClick: () -> Unit,
+    onMoveFocus: ((FocusDirection) -> Boolean)?
+) {
+    val shape = RoundedCornerShape(calculateRoundedValue(12).sdp)
+    val isFocused by interactionSource.collectIsFocusedAsState()
+    val focusScale by animateFloatAsState(
+        targetValue = if (isFocused) 1.06f else 1f,
+        animationSpec = tween(durationMillis = 220),
+        label = "trailerButtonScale"
+    )
+    val containerStartColor by animateColorAsState(
+        targetValue = if (isFocused) {
+            lerp(accentColor, Color.White, 0.35f).copy(alpha = 0.6f)
+        } else {
+            Color.White.copy(alpha = 0.12f)
+        },
+        animationSpec = tween(durationMillis = 240),
+        label = "trailerButtonStartColor"
+    )
+    val containerEndColor by animateColorAsState(
+        targetValue = if (isFocused) {
+            Color.White.copy(alpha = 0.22f)
+        } else {
+            Color.White.copy(alpha = 0.05f)
+        },
+        animationSpec = tween(durationMillis = 240),
+        label = "trailerButtonEndColor"
+    )
+    val borderWidth by animateDpAsState(
+        targetValue = if (isFocused) calculateRoundedValue(2).sdp else calculateRoundedValue(1).sdp,
+        animationSpec = tween(durationMillis = 220),
+        label = "trailerButtonBorder"
+    )
+    val glowElevation by animateDpAsState(
+        targetValue = if (isFocused) calculateRoundedValue(6).sdp else 0.dp,
+        animationSpec = tween(durationMillis = 220),
+        label = "trailerButtonGlow"
+    )
+    val labelColor by animateColorAsState(
+        targetValue = if (isFocused) Color.White else Color.White.copy(alpha = 0.85f),
+        animationSpec = tween(durationMillis = 200),
+        label = "trailerButtonLabelColor"
+    )
+    val borderBrush: Brush = if (isFocused) {
+        Brush.linearGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.9f),
+                accentColor.copy(alpha = 0.8f)
+            )
+        )
+    } else {
+        SolidColor(Color.White.copy(alpha = 0.2f))
+    }
+
+    Surface(
+        modifier = modifier
+            .dpadNavigation(
+                shape = shape,
+                onClick = onClick,
+                onMoveFocus = onMoveFocus,
+                interactionSource = interactionSource,
+                applyClickModifier = false,
+                showFocusOutline = false
+            )
+            .graphicsLayer {
+                scaleX = focusScale
+                scaleY = focusScale
+            },
+        shape = shape,
+        onClick = onClick,
+        interactionSource = interactionSource,
+        border = BorderStroke(borderWidth, borderBrush),
+        color = Color.Transparent,
+        shadowElevation = glowElevation
+    ) {
+        Row(
+            modifier = Modifier
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(containerStartColor, containerEndColor)
+                    ),
+                    shape = shape
+                )
+                .padding(
+                    horizontal = calculateRoundedValue(12).sdp,
+                    vertical = calculateRoundedValue(5).sdp
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(calculateRoundedValue(6).sdp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "Trailer",
+                tint = labelColor,
+                modifier = Modifier.size(calculateRoundedValue(14).sdp)
+            )
+            Text(
+                text = "Trailer",
                 color = labelColor,
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 fontSize = calculateRoundedValue(10).ssp

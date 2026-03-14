@@ -166,6 +166,7 @@ fun MediaDetailScreen(
                 episodes = episodes,
                 seasons = seasons,
                 specialFeatures = detailState.specialFeatures,
+                localTrailers = detailState.localTrailers,
                 initialSeasonId = initialSeasonId,
                 initialEpisodeIndex = initialEpisodeIndex,
                 shouldAutoFocusEpisode = episodeId != null,

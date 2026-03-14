@@ -56,6 +56,7 @@ import android.util.Log
 import com.hritwik.avoid.utils.helpers.NetworkMonitor
 import com.hritwik.avoid.utils.helpers.normalizeUuid
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -1642,6 +1643,28 @@ class LibraryRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getLocalTrailers(
+        mediaId: String,
+        userId: String,
+        accessToken: String
+    ): NetworkResult<List<MediaItem>> {
+        val serverUrl = getServerUrl()
+        return safeApiCall(serverUrl) {
+            val apiService = createApiService(serverUrl)
+
+            val authHeader = JellyfinApiService.createAuthHeader(deviceId, token = accessToken)
+            val response = apiService.getLocalTrailers(
+                itemId = mediaId,
+                userId = userId,
+                authorization = authHeader
+            )
+
+            response.map { dto ->
+                mapToMediaItem(dto)
+            }
+        }
+    }
+
     override suspend fun getMediaCredits(
         userId: String,
         mediaId: String,
@@ -1695,7 +1718,20 @@ class LibraryRepositoryImpl @Inject constructor(
             ).map { dto ->
                 mapToMediaItem(dto)
             }
-            RelatedResources(similar, special)
+            val localTrailers = try {
+                apiService.getLocalTrailers(
+                    itemId = mediaId,
+                    userId = userId,
+                    authorization = authHeader
+                ).map { dto ->
+                    mapToMediaItem(dto)
+                }
+            } catch (cancellationException: CancellationException) {
+                throw cancellationException
+            } catch (_: Exception) {
+                emptyList()
+            }
+            RelatedResources(similar, special, localTrailers)
         }
     }
 

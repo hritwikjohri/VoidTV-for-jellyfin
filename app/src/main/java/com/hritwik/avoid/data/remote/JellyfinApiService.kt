@@ -334,6 +334,17 @@ interface JellyfinApiService {
         @Header("X-Emby-Authorization") authorization: String
     ): List<BaseItemDto>
 
+    @GET("Items/{itemId}/LocalTrailers")
+    suspend fun getLocalTrailers(
+        @Path("itemId") itemId: String,
+        @Query("UserId") userId: String,
+        @Query("Fields") fields: String = ApiConstants.FIELDS_FULL,
+        @Query("EnableImageTypes") enableImageTypes: String? = "Primary",
+        @Query("EnableImages") enableImages: Boolean = true,
+        @Query("EnableUserData") enableUserData: Boolean = true,
+        @Header("X-Emby-Authorization") authorization: String
+    ): List<BaseItemDto>
+
     @GET("MediaSegments/{itemId}")
     suspend fun getItemSegments(
         @Path("itemId") itemId: String,

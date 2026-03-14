@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -208,12 +209,27 @@ fun QuickConnectAuthorizeScreen(
                     .wrapContentSize()
                     .align(Alignment.BottomEnd)
                     .focusRequester(cancelButtonFocusRequester)
+                    .focusProperties {
+                        up = cancelButtonFocusRequester
+                        down = cancelButtonFocusRequester
+                        left = cancelButtonFocusRequester
+                        right = cancelButtonFocusRequester
+                    }
                     .focusable()
                     .onPreviewKeyEvent {
-                        if (it.key == Key.Back && it.type == KeyEventType.KeyDown) {
-                            viewModel.resetQuickConnectState()
-                            onCancel()
-                            true
+                        if (it.type == KeyEventType.KeyDown) {
+                            when (it.key) {
+                                Key.Back -> {
+                                    viewModel.resetQuickConnectState()
+                                    onCancel()
+                                    true
+                                }
+                                Key.DirectionUp,
+                                Key.DirectionDown,
+                                Key.DirectionLeft,
+                                Key.DirectionRight -> true
+                                else -> false
+                            }
                         } else {
                             false
                         }

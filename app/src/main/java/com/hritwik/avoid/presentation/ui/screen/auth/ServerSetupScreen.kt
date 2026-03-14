@@ -113,6 +113,7 @@ fun ServerSetupScreen(
         )
     }
     val textFieldFocusRequester = remember { FocusRequester() }
+    val certificateButtonFocusRequester = remember { FocusRequester() }
     val buttonFocusRequester = remember { FocusRequester() }
     var textFieldFocused by remember { mutableStateOf(false) }
     val connectButtonInteractionSource = remember { MutableInteractionSource() }
@@ -387,7 +388,10 @@ fun ServerSetupScreen(
                             .fillMaxWidth(0.92f)
                             .widthIn(max = 560.dp)
                             .focusRequester(textFieldFocusRequester)
-                            .focusProperties { next = buttonFocusRequester }
+                            .focusProperties {
+                                next = certificateButtonFocusRequester
+                                down = certificateButtonFocusRequester
+                            }
                             .onFocusChanged { focusState ->
                                 textFieldFocused = focusState.hasFocus
                                 if (focusState.hasFocus) {
@@ -494,7 +498,29 @@ fun ServerSetupScreen(
                             contentColor = Color.White
                         ),
                         modifier = Modifier
+                            .focusRequester(certificateButtonFocusRequester)
                             .pressToClick { handleCertificateClick() }
+                            .onPreviewKeyEvent { e ->
+                                if (e.type == KeyEventType.KeyDown) {
+                                    when (e.key) {
+                                        Key.DirectionDown -> {
+                                            buttonFocusRequester.requestFocus()
+                                            true
+                                        }
+                                        Key.DirectionUp -> {
+                                            textFieldFocusRequester.requestFocus()
+                                            true
+                                        }
+                                        else -> false
+                                    }
+                                } else {
+                                    false
+                                }
+                            }
+                            .focusProperties {
+                                down = buttonFocusRequester
+                                up = textFieldFocusRequester
+                            }
                             .focusable()
                     ) {
                         if (state.isMtlsImporting) {
@@ -558,8 +584,8 @@ fun ServerSetupScreen(
                     .focusRequester(buttonFocusRequester)
                     .pressToClick { handleConnect() }
                     .focusProperties {
-                        previous = textFieldFocusRequester
-                        up = textFieldFocusRequester
+                        previous = certificateButtonFocusRequester
+                        up = certificateButtonFocusRequester
                     }
                     .focusable(),
                 interactionSource = connectButtonInteractionSource,
