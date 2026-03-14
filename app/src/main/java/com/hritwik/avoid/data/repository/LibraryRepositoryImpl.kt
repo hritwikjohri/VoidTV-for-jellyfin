@@ -2058,7 +2058,7 @@ class LibraryRepositoryImpl @Inject constructor(
                 recursive = false,  
                 startIndex = 0,
                 limit = Int.MAX_VALUE,
-                sortBy = "SortName",
+                sortBy = "Default",
                 sortOrder = "Ascending",
                 fields = ApiConstants.FIELDS_BASIC,
                 enableImageTypes = DEFAULT_MEDIA_IMAGE_TYPES,
